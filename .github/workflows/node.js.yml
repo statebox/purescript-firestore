@@ -23,3 +23,11 @@ jobs:
     - run: npm i
     - run: npm run build --if-present
     - run: npm test
+      env:
+        FIRESTORE_PROJECT_ID: ${{ secrets.FIRESTORE_PROJECT_ID }}
+        FIRESTORE_API_KEY: ${{ secrets.FIRESTORE_API_KEY }}
+        FIRESTORE_APP_ID: ${{ secrets.FIRESTORE_APP_ID }}
+        FIRESTORE_AUTH_DOMAIN: ${{ secrets.FIRESTORE_AUTH_DOMAIN }}
+        FIRESTORE_DATABASE_URL: ${{ secrets.FIRESTORE_DATABASE_URL }}
+        FIRESTORE_MESSAGING_SENDER_ID: ${{ secrets.FIRESTORE_MESSAGING_SENDER_ID }}
+        FIRESTORE_STORAGE_BUCKET: ${{ secrets.FIRESTORE_STORAGE_BUCKET }}
