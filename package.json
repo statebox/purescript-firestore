@@ -1,0 +1,24 @@
+{
+  "name": "purescript-firestore",
+  "version": "1.0.0",
+  "description": "Purescript bindings for Firestore",
+  "scripts": {
+    "postinstall": "spago install",
+    "init": "spago init",
+    "build": "spago build",
+    "repl": "spago repl",
+    "docs": "spago docs",
+    "watch": "spago build --watch",
+    "test": "spago test",
+    "testwatch": "spago test --watch"
+  },
+  "author": "Marco Perone <pasafama@gmail.com>",
+  "devDependencies": {
+    "purescript": "^0.13.6",
+    "spago": "^0.14"
+  },
+  "dependencies": {
+    "decimal.js": "^10.2.0",
+    "firebase": "^7.9.1"
+  }
+}
