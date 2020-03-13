@@ -4,6 +4,7 @@ import Prelude
 import Control.Promise (toAff)
 import Data.Lens as Lens
 import Data.Maybe (Maybe(..))
+import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Dotenv (loadFile) as Dotenv
 import Effect.Class (liftEffect)
@@ -42,21 +43,23 @@ suite = do
                         # Lens.set databaseUrl       firestoreDatabaseUrl
                         # Lens.set messagingSenderId firestoreMessagingSenderId
                         # Lens.set storageBucket     firestoreStorageBucket
-              app = initializeApp fsOptions (Just "firestore-test")
-              firestoreInstance = firestore app
-              maybeDocumentReference = doc firestoreInstance <$> (pathFromString "collection/test")
-          case maybeDocumentReference of
+          app <- liftEffect $ initializeApp fsOptions (Just "firestore-test")
+          firestoreInstance <- liftEffect $ firestore app
+          maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+          case maybeDocRef of
             Nothing                -> fail "invalid path"
-            Just documentReference ->
-              let document = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
+            Just docRef ->
+              let doc = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
                                                         , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
                                                         , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
                                                         , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
-                  setPromise = set documentReference document (Just $ mergeFieldsOption [stringMergeField "text", fieldPathMergeField ["float"]])
-                  getPromise = get documentReference Nothing
               in do
+                setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
+                                                                                    , fieldPathMergeField ["float"]
+                                                                                    ])
+                getPromise <- liftEffect $ get docRef Nothing
                 toAff setPromise
                 snapshot <- toAff getPromise
-                let result = snapshotData snapshot Nothing
+                result <- liftEffect $ snapshotData snapshot Nothing
 
-                result `shouldEqual` Just document
+                result `shouldEqual` Just doc
