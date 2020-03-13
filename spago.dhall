@@ -17,7 +17,9 @@
     , "nullable"
     , "precise-datetime"
     , "psci-support"
+    , "quickcheck"
     , "spec"
+    , "spec-quickcheck"
     , "strings"
     , "transformers"
     ]
