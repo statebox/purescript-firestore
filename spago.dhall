@@ -20,5 +20,5 @@
     , "strings"
     ]
 , packages =
-    ./../packages.dhall
+    ./packages.dhall
 }
