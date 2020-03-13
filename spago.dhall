@@ -8,6 +8,7 @@
     , "bytestrings"
     , "dotenv"
     , "effect"
+    , "exceptions"
     , "foldable-traversable"
     , "foreign-object"
     , "functions"
@@ -18,6 +19,7 @@
     , "psci-support"
     , "spec"
     , "strings"
+    , "transformers"
     ]
 , packages =
     ./packages.dhall
