@@ -57,9 +57,9 @@ suite = do
         Nothing                -> fail "invalid path"
         Just docRef ->
           let doc = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
-                                              , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
-                                              , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
-                                              , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
+                                               , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
+                                               , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
+                                               , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
           in do
             setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
                                                                                 , fieldPathMergeField ["float"]
