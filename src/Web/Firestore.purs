@@ -1,15 +1,28 @@
-module Web.Firestore where
+module Web.Firestore
+( App
+, DocumentReference
+, DocumentSnapshot
+, Firestore
+, initializeApp
+, doc
+, firestore
+, get
+, set
+, snapshotData
+) where
 
 import Prelude
 import Control.Promise (Promise)
 import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson)
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn1, Fn2, Fn3, runFn1, runFn2, runFn3)
+import Data.Either (Either(..), hush)
+import Data.Function.Uncurried (Fn1, Fn2, Fn3, Fn4, runFn1, runFn2, runFn3, runFn4)
 import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toNullable)
+import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
 
 import Web.Firestore.DocumentData (DocumentData)
+import Web.Firestore.Errors.InitializeError (FirebaseError, InitializeError, fromFirebaseError, fromString)
 import Web.Firestore.GetOptions (GetOptions)
 import Web.Firestore.Options (Options)
 import Web.Firestore.Path (Path)
@@ -18,10 +31,26 @@ import Web.Firestore.SnapshotOptions (SnapshotOptions)
 
 foreign import data App :: Type
 
-foreign import initializeAppImpl :: Fn2 Json (Nullable String) (Effect App)
+foreign import showAppImpl :: Fn1 App String
 
-initializeApp :: Options -> Maybe String -> Effect App
-initializeApp options name = runFn2 initializeAppImpl (encodeJson options) (toNullable name)
+foreign import eqAppImpl :: Fn2 App App Boolean
+
+instance showApp :: Show App where
+  show = runFn1 showAppImpl
+
+instance eqApp :: Eq App where
+  eq = runFn2 eqAppImpl
+
+foreign import initializeAppImpl :: Fn4
+  (String -> Either String App)
+  (App -> Either String App)
+  Json
+  (Nullable String)
+  (Effect (Either FirebaseError App))
+
+initializeApp :: Options -> Maybe String -> Effect (Either InitializeError App)
+initializeApp options name = (fromFirebaseError fromString +++ identity) <$>
+  runFn4 initializeAppImpl Left Right (encodeJson options) (toNullable name)
 
 foreign import data Firestore :: Type
 

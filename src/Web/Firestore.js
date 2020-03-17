@@ -1,13 +1,33 @@
 "use strict";
 
 const firebase = require('firebase')
+const lodash = require('lodash')
 
-exports.initializeAppImpl = function (options, name) {
+exports.showAppImpl = function (app) {
+  const ret = {
+    name: app.name_,
+    options : app.options_
+  }
+
+  return JSON.stringify(ret)
+}
+
+exports.eqAppImpl = function (app1, app2) {
+  return lodash.isEqual(app1, app2)
+}
+
+exports.initializeAppImpl = function (left, right, options, name) {
   return function () {
     // optional arguments should be passed as `undefined` and not as `null`
     name = name === null ? undefined : name
 
-    return firebase.initializeApp(options, name)
+    try {
+      const app = firebase.initializeApp(options, name)
+
+      return right(app)
+    } catch (error) {
+      return left(error)
+    }
   }
 }
 

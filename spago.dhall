@@ -16,6 +16,7 @@
     , "node-process"
     , "nullable"
     , "precise-datetime"
+    , "profunctor"
     , "psci-support"
     , "quickcheck"
     , "spec"
