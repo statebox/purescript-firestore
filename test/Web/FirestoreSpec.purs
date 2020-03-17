@@ -60,6 +60,16 @@ suite = do
       eitherApp <- liftEffect $ initializeApp testOptions Nothing
       eitherApp `shouldSatisfy` isRight
 
+    it "fails to initialize an app with an empty name" do
+      testOptions <- buildTestOptions
+      eitherApp <- liftEffect $ initializeApp testOptions (Just "")
+      eitherApp # either
+        (evalInitializeError
+          (const $ fail "Should be a BadAppName InitializeError")
+          (_ `shouldSatisfy` (const true))
+          (const $ fail "Should be a BadAppName InitializeError"))
+        (const $ fail "should not initialize an app with an empty name")
+
     it "fails app initialization if app is initialized twice" do
       testOptions <- buildTestOptions
       _ <- liftEffect $ initializeApp testOptions (Just "firestore-test2")
@@ -67,6 +77,7 @@ suite = do
       eitherApp # either
         (evalInitializeError
           (_ `shouldSatisfy` (const true))
+          (const $ fail "Should be a DuplicateApp InitializeError")
           (const $ fail "Should be a DuplicateApp InitializeError"))
         (const $ fail "should not initialize the same app twice")
 
