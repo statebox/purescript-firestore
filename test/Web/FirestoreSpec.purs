@@ -3,7 +3,7 @@ module Test.Web.FirestoreSpec where
 import Prelude
 import Control.Monad.Error.Class (throwError)
 import Control.Promise (toAff)
-import Data.Either (Either(..), either, isRight)
+import Data.Either (Either(..), either, isLeft, isRight)
 import Data.Lens as Lens
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
@@ -105,9 +105,9 @@ suite = do
         Left error -> fail $ show error
         Right app  -> do
           firestoreInstance <- liftEffect $ firestore app
-          pure unit
+          firestoreInstance `shouldSatisfy` isRight
 
-    it " does not retrieve a firestore instance if the app gets deleted" do
+    it "does not retrieve a firestore instance if the app gets deleted" do
       testOptions <- buildTestOptions
       eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test7")
       case eitherErrorApp of
@@ -116,7 +116,7 @@ suite = do
           deletePromise <- liftEffect $ deleteApp app
           _ <- toAff $ deletePromise
           firestoreInstance <- liftEffect $ firestore app
-          pure unit
+          firestoreInstance `shouldSatisfy` isLeft
 
     it "sets and gets data correctly" do
       testOptions <- buildTestOptions
@@ -124,22 +124,25 @@ suite = do
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
-          firestoreInstance <- liftEffect $ firestore app
-          maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
-          case maybeDocRef of
-            Nothing                -> fail "invalid path"
-            Just docRef ->
-              let doc = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
-                                                   , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
-                                                   , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
-                                                   , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
-              in do
-                setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
-                                                                                    , fieldPathMergeField ["float"]
-                                                                                    ])
-                getPromise <- liftEffect $ get docRef Nothing
-                toAff setPromise
-                snapshot <- toAff getPromise
-                result <- liftEffect $ snapshotData snapshot Nothing
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing                -> fail "invalid path"
+                Just docRef ->
+                  let doc = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
+                                                       , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
+                                                       , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
+                                                       , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
+                  in do
+                    setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
+                                                                                        , fieldPathMergeField ["float"]
+                                                                                        ])
+                    getPromise <- liftEffect $ get docRef Nothing
+                    toAff setPromise
+                    snapshot <- toAff getPromise
+                    result <- liftEffect $ snapshotData snapshot Nothing
 
-                result `shouldEqual` Just doc
+                    result `shouldEqual` Just doc

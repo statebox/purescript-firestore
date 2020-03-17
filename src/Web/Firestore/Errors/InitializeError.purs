@@ -1,21 +1,13 @@
 module Web.Firestore.Errors.InitializeError
-( FirebaseError
-, InitializeError
+( InitializeError
 , evalInitializeError
-, fromFirebaseError
-, fromString
 ) where
 
 import Prelude
-import Control.Alt ((<|>))
-import Data.Either (Either, either)
-import Data.Foldable (foldr)
 import Data.Function.Uncurried (Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String.Regex (Regex, match, regex)
-import Data.String.Regex.Flags (ignoreCase)
-import Data.Traversable (sequence)
-import Data.Tuple.Nested (type (/\), (/\))
+import Data.Tuple.Nested ((/\))
+
+import Web.Firestore.Errors.FirebaseError (class FromFirebaseError, FirebaseError)
 
 data InitializeError
   = DuplicateApp String
@@ -28,28 +20,14 @@ evalInitializeError onDuplicateApp onBadAppName onOther = case _ of
   BadAppName   s -> onBadAppName s
   Other        s -> onOther s
 
-errorMatchers :: Either String (Array (Regex /\ (String -> InitializeError)))
-errorMatchers = sequence [ (_ /\ DuplicateApp) <$> regex "^FirebaseError: Firebase: Firebase App named" ignoreCase
-                         , (_ /\ BadAppName  ) <$> regex "^FirebaseError: Firebase: Illegal App name"   ignoreCase
-                         ]
-
-fromString :: String -> InitializeError
-fromString s = errorMatchers # either
-  (const $ Other s)
-  (foldr tryMatch Nothing >>> fromMaybe (Other s))
-  where
-    tryMatch :: Regex /\ (String -> InitializeError) -> Maybe InitializeError -> Maybe InitializeError
-    tryMatch (regex /\ constructor) previous = previous <|> trySingleMatch regex constructor s
-
-    trySingleMatch :: Regex -> (String -> InitializeError) -> String -> Maybe InitializeError
-    trySingleMatch regex constructor s' = const (constructor s') <$> match regex s'
-
-foreign import data FirebaseError :: Type
-
 foreign import fromFirebaseErrorImpl :: Fn2 (String -> InitializeError) FirebaseError InitializeError
 
-fromFirebaseError :: (String -> InitializeError) -> FirebaseError -> InitializeError
-fromFirebaseError = runFn2 fromFirebaseErrorImpl
+instance fromFirebaseErrorInitializeError :: FromFirebaseError InitializeError where
+  patterns = [ ("^FirebaseError: Firebase: Firebase App named" /\ DuplicateApp)
+             , ("^FirebaseError: Firebase: Illegal App name"   /\ BadAppName  )
+             ]
+  fromFirebaseError = runFn2 fromFirebaseErrorImpl
+  default = Other
 
 instance showInitializeError :: Show InitializeError where
   show = case _ of

@@ -23,7 +23,9 @@ import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
 
 import Web.Firestore.DocumentData (DocumentData)
-import Web.Firestore.Errors.InitializeError (FirebaseError, InitializeError, fromFirebaseError, fromString)
+import Web.Firestore.Errors.FirebaseError (FirebaseError, fromFirebaseError, fromString)
+import Web.Firestore.Error.FirestoreError (FirestoreError)
+import Web.Firestore.Errors.InitializeError (InitializeError)
 import Web.Firestore.GetOptions (GetOptions)
 import Web.Firestore.Options (Options)
 import Web.Firestore.Path (Path)
@@ -60,10 +62,19 @@ deleteApp = runFn1 deleteAppImpl
 
 foreign import data Firestore :: Type
 
-foreign import firestoreImpl :: Fn1 App (Effect Firestore)
+foreign import showFirestoreImpl :: Fn1 Firestore String
 
-firestore :: App -> Effect Firestore
-firestore = runFn1 firestoreImpl
+instance showFirestore :: Show Firestore where
+  show = runFn1 showFirestoreImpl
+
+foreign import firestoreImpl :: Fn3
+  (FirebaseError -> Either FirebaseError Firestore)
+  (Firestore -> Either FirebaseError Firestore)
+  App
+  (Effect (Either FirebaseError Firestore))
+
+firestore :: App -> Effect (Either FirestoreError Firestore)
+firestore app = (fromFirebaseError fromString +++ identity) <$> runFn3 firestoreImpl Left Right app
 
 -- TODO: should this be a newtype or a foreign import?
 -- newtype DocumentReference a = DocumentReference a

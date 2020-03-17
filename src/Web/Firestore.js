@@ -37,9 +37,25 @@ exports.deleteAppImpl = function (app) {
   }
 }
 
-exports.firestoreImpl = function (app) {
+exports.showFirestoreImpl = function (firestore) {
+  const ret = {
+    databaseId: firestore._databaseId,
+    persistenceKey: firestore._persistenceKey,
+    settings: firestore._settings
+  }
+
+  return JSON.stringify(ret)
+}
+
+exports.firestoreImpl = function (left, right, app) {
   return function () {
-    return app.firestore()
+    try {
+      const firestore = app.firestore()
+
+      return right(firestore)
+    } catch (error) {
+      return left(error)
+    }
   }
 }
 
