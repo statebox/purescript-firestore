@@ -31,6 +31,12 @@ exports.initializeAppImpl = function (left, right, options, name) {
   }
 }
 
+exports.deleteAppImpl = function (app) {
+  return function () {
+    return app.delete()
+  }
+}
+
 exports.firestoreImpl = function (app) {
   return function () {
     return app.firestore()

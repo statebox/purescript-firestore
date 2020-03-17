@@ -3,10 +3,11 @@ module Web.Firestore
 , DocumentReference
 , DocumentSnapshot
 , Firestore
-, initializeApp
+, deleteApp
 , doc
 , firestore
 , get
+, initializeApp
 , set
 , snapshotData
 ) where
@@ -51,6 +52,11 @@ foreign import initializeAppImpl :: Fn4
 initializeApp :: Options -> Maybe String -> Effect (Either InitializeError App)
 initializeApp options name = (fromFirebaseError fromString +++ identity) <$>
   runFn4 initializeAppImpl Left Right (encodeJson options) (toNullable name)
+
+foreign import deleteAppImpl :: Fn1 App (Effect (Promise Unit))
+
+deleteApp :: App -> Effect (Promise Unit)
+deleteApp = runFn1 deleteAppImpl
 
 foreign import data Firestore :: Type
 

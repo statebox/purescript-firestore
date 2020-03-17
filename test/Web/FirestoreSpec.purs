@@ -17,7 +17,7 @@ import Node.Process (lookupEnv)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
-import Web.Firestore (doc, firestore, get, initializeApp, set, snapshotData)
+import Web.Firestore (deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (DocumentValue(..))
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
@@ -98,9 +98,29 @@ suite = do
           (const $ fail "app initialization should have happened correctly")
           (\app2 -> app1 `shouldNotEqual` app2))
 
-    it "sets and gets data correctly" do
+    it "retrieves a firestore instance" do
       testOptions <- buildTestOptions
       eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test6")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          firestoreInstance <- liftEffect $ firestore app
+          pure unit
+
+    it " does not retrieve a firestore instance if the app gets deleted" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test7")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          deletePromise <- liftEffect $ deleteApp app
+          _ <- toAff $ deletePromise
+          firestoreInstance <- liftEffect $ firestore app
+          pure unit
+
+    it "sets and gets data correctly" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test8")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -110,9 +130,9 @@ suite = do
             Nothing                -> fail "invalid path"
             Just docRef ->
               let doc = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
-                                                  , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
-                                                  , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
-                                                  , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
+                                                   , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
+                                                   , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
+                                                   , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
               in do
                 setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
                                                                                     , fieldPathMergeField ["float"]
