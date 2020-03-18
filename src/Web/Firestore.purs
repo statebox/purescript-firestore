@@ -95,10 +95,10 @@ set docRef a options = runFn3 setImpl docRef (encodeJson a) (toNullable options)
 
 foreign import data DocumentSnapshot :: Type -> Type
 
-foreign import getImpl :: forall a. Fn2 (DocumentReference a) (Nullable GetOptions) (Effect (Promise (DocumentSnapshot a)))
+foreign import getImpl :: forall a. Fn2 (DocumentReference a) (Nullable Json) (Effect (Promise (DocumentSnapshot a)))
 
 get :: forall a. DocumentReference a -> Maybe GetOptions -> Effect (Promise (DocumentSnapshot a))
-get docRef options = (runFn2 getImpl) docRef (toNullable options)
+get docRef options = (runFn2 getImpl) docRef (toNullable $ encodeJson <$> options)
 
 foreign import dataImpl :: forall a. Fn2 (DocumentSnapshot a) (Nullable SnapshotOptions) (Effect Json)
 

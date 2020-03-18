@@ -21,6 +21,7 @@ import Web.Firestore (deleteApp, doc, firestore, get, initializeApp, set, snapsh
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (DocumentValue(..))
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
+import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.Options (Options, apiKey, appId, authDomain, databaseUrl, messagingSenderId, options, storageBucket)
 import Web.Firestore.Path (pathFromString)
 import Web.Firestore.PrimitiveValue (PrimitiveValue(..))
@@ -148,8 +149,8 @@ suite = do
             Right firestoreInstance -> do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               case maybeDocRef of
-                Nothing                -> fail "invalid path"
-                Just docRef ->do
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
                   setPromise <- liftEffect $ set docRef document Nothing
                   toAff setPromise
 
@@ -165,8 +166,8 @@ suite = do
             Right firestoreInstance -> do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               case maybeDocRef of
-                Nothing                -> fail "invalid path"
-                Just docRef ->do
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
                   setPromise <- liftEffect $ set docRef document (Just $ mergeOption true)
                   toAff setPromise
 
@@ -182,14 +183,14 @@ suite = do
             Right firestoreInstance -> do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               case maybeDocRef of
-                Nothing                -> fail "invalid path"
-                Just docRef ->do
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
                   setPromise <- liftEffect $ set docRef document (Just $ mergeFieldsOption [ stringMergeField "text"
                                                                                            , fieldPathMergeField ["float"]
                                                                                            ])
                   toAff setPromise
 
-    it "sets and gets data correctly" do
+    it "gets existing data correctly with default options" do
       testOptions <- buildTestOptions
       eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test12")
       case eitherErrorApp of
@@ -201,11 +202,87 @@ suite = do
             Right firestoreInstance -> do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               case maybeDocRef of
-                Nothing                -> fail "invalid path"
+                Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document (Just $ mergeFieldsOption [ stringMergeField "text"
-                                                                                           , fieldPathMergeField ["float"]
-                                                                                           ])
+                  setPromise <- liftEffect $ set docRef document Nothing
+                  getPromise <- liftEffect $ get docRef Nothing
+                  toAff setPromise
+                  snapshot <- toAff getPromise
+                  pure unit
+
+    it "gets existing data correctly with cache options" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test13")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  setPromise <- liftEffect $ set docRef document Nothing
+                  getPromise <- liftEffect $ get docRef (Just $ GetOptions Cache)
+                  toAff setPromise
+                  snapshot <- toAff getPromise
+                  pure unit
+
+    it "gets existing data correctly with server options" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test14")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  setPromise <- liftEffect $ set docRef document Nothing
+                  getPromise <- liftEffect $ get docRef (Just $ GetOptions Server)
+                  toAff setPromise
+                  snapshot <- toAff getPromise
+                  pure unit
+
+    it "gets data with was not set before" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test15")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/other-test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  getPromise <- liftEffect $ get docRef (Just $ GetOptions Server)
+                  snapshot <- toAff getPromise
+                  pure unit
+
+    it "sets and gets data correctly" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test16")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  setPromise <- liftEffect $ set docRef document Nothing
                   getPromise <- liftEffect $ get docRef Nothing
                   toAff setPromise
                   snapshot <- toAff getPromise

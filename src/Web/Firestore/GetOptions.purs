@@ -1,6 +1,6 @@
 module Web.Firestore.GetOptions where
 
-import Data.Argonaut (class EncodeJson, encodeJson, fromString)
+import Data.Argonaut (class EncodeJson, encodeJson, fromString, jsonEmptyObject, (:=), (~>))
 
 data SourceOption
   = Default
@@ -10,10 +10,10 @@ data SourceOption
 instance encodeJsonSourceOption :: EncodeJson SourceOption where
   encodeJson = case _ of
     Default -> fromString "default"
-    Server  -> fromString "Server"
-    Cache   -> fromString "Cache"
+    Server  -> fromString "server"
+    Cache   -> fromString "cache"
 
 newtype GetOptions = GetOptions SourceOption
 
 instance encodeJsonGetOptions :: EncodeJson GetOptions where
-  encodeJson (GetOptions so) = encodeJson so
+  encodeJson (GetOptions so) = "source" := encodeJson so ~> jsonEmptyObject
