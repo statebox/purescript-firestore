@@ -76,9 +76,6 @@ foreign import firestoreImpl :: Fn3
 firestore :: App -> Effect (Either FirestoreError Firestore)
 firestore app = (fromFirebaseError fromString +++ identity) <$> runFn3 firestoreImpl Left Right app
 
--- TODO: should this be a newtype or a foreign import?
--- newtype DocumentReference a = DocumentReference a
-
 foreign import data DocumentReference :: Type -> Type
 
 foreign import showDocumentReferenceImpl :: forall a. Fn1 (DocumentReference a) String
@@ -95,9 +92,6 @@ foreign import setImpl :: forall a. Fn3 (DocumentReference a) Json (Nullable Set
 
 set :: forall a. EncodeJson a => DocumentReference a -> a -> Maybe SetOptions -> Effect (Promise Unit)
 set docRef a options = runFn3 setImpl docRef (encodeJson a) (toNullable options)
-
--- TODO: should this be a newtype or a foreign import?
--- newtype DocumentSnapshot a = DocumentSnapshot a
 
 foreign import data DocumentSnapshot :: Type -> Type
 
