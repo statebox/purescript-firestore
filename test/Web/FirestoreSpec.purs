@@ -24,7 +24,7 @@ import Web.Firestore.Errors.InitializeError (evalInitializeError)
 import Web.Firestore.Options (Options, apiKey, appId, authDomain, databaseUrl, messagingSenderId, options, storageBucket)
 import Web.Firestore.Path (pathFromString)
 import Web.Firestore.PrimitiveValue (PrimitiveValue(..))
-import Web.Firestore.SetOptions (mergeFieldsOption, stringMergeField, fieldPathMergeField)
+import Web.Firestore.SetOptions (mergeFieldsOption, mergeOption, stringMergeField, fieldPathMergeField)
 
 buildTestOptions :: Aff Options
 buildTestOptions = do
@@ -131,7 +131,12 @@ suite = do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               maybeDocRef `shouldSatisfy` isJust
 
-    it "sets and gets data correctly" do
+    let document = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
+                                              , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
+                                              , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
+                                              , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
+
+    it "sets data correctly with no option" do
       testOptions <- buildTestOptions
       eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test9")
       case eitherErrorApp of
@@ -144,18 +149,66 @@ suite = do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               case maybeDocRef of
                 Nothing                -> fail "invalid path"
-                Just docRef ->
-                  let doc = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
-                                                       , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
-                                                       , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
-                                                       , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
-                  in do
-                    setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
-                                                                                        , fieldPathMergeField ["float"]
-                                                                                        ])
-                    getPromise <- liftEffect $ get docRef Nothing
-                    toAff setPromise
-                    snapshot <- toAff getPromise
-                    result <- liftEffect $ snapshotData snapshot Nothing
+                Just docRef ->do
+                  setPromise <- liftEffect $ set docRef document Nothing
+                  toAff setPromise
 
-                    result `shouldEqual` Just doc
+    it "sets data correctly with merge option" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test10")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing                -> fail "invalid path"
+                Just docRef ->do
+                  setPromise <- liftEffect $ set docRef document (Just $ mergeOption true)
+                  toAff setPromise
+
+    it "sets data correctly with mergeFields option" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test11")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing                -> fail "invalid path"
+                Just docRef ->do
+                  setPromise <- liftEffect $ set docRef document (Just $ mergeFieldsOption [ stringMergeField "text"
+                                                                                           , fieldPathMergeField ["float"]
+                                                                                           ])
+                  toAff setPromise
+
+    it "sets and gets data correctly" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test12")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing                -> fail "invalid path"
+                Just docRef -> do
+                  setPromise <- liftEffect $ set docRef document (Just $ mergeFieldsOption [ stringMergeField "text"
+                                                                                           , fieldPathMergeField ["float"]
+                                                                                           ])
+                  getPromise <- liftEffect $ get docRef Nothing
+                  toAff setPromise
+                  snapshot <- toAff getPromise
+                  result <- liftEffect $ snapshotData snapshot Nothing
+
+                  result `shouldEqual` Just document
