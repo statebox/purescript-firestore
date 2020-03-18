@@ -5,7 +5,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Promise (toAff)
 import Data.Either (Either(..), either, isLeft, isRight)
 import Data.Lens as Lens
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Dotenv (loadFile) as Dotenv
@@ -118,9 +118,22 @@ suite = do
           firestoreInstance <- liftEffect $ firestore app
           firestoreInstance `shouldSatisfy` isLeft
 
-    it "sets and gets data correctly" do
+    it "does create a document reference" do
       testOptions <- buildTestOptions
       eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test8")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              maybeDocRef `shouldSatisfy` isJust
+
+    it "sets and gets data correctly" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test9")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do

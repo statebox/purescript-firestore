@@ -81,6 +81,11 @@ firestore app = (fromFirebaseError fromString +++ identity) <$> runFn3 firestore
 
 foreign import data DocumentReference :: Type -> Type
 
+foreign import showDocumentReferenceImpl :: forall a. Fn1 (DocumentReference a) String
+
+instance showDocumentReference :: Show a => Show (DocumentReference a) where
+  show = runFn1 showDocumentReferenceImpl
+
 foreign import docImpl :: Fn2 Firestore String (Effect (DocumentReference DocumentData))
 
 doc :: Firestore -> Path -> Effect (DocumentReference DocumentData)
