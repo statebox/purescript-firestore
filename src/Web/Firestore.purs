@@ -100,7 +100,7 @@ foreign import getImpl :: forall a. Fn2 (DocumentReference a) (Nullable Json) (E
 get :: forall a. DocumentReference a -> Maybe GetOptions -> Effect (Promise (DocumentSnapshot a))
 get docRef options = (runFn2 getImpl) docRef (toNullable $ encodeJson <$> options)
 
-foreign import dataImpl :: forall a. Fn2 (DocumentSnapshot a) (Nullable SnapshotOptions) (Effect Json)
+foreign import dataImpl :: forall a. Fn2 (DocumentSnapshot a) (Nullable Json) (Effect Json)
 
 snapshotData :: forall a. DecodeJson a => DocumentSnapshot a -> Maybe SnapshotOptions -> Effect (Maybe a)
-snapshotData docSnapshot options = hush <<< decodeJson <$> runFn2 dataImpl docSnapshot (toNullable options)
+snapshotData docSnapshot options = hush <<< decodeJson <$> runFn2 dataImpl docSnapshot (toNullable $ encodeJson <$> options)
