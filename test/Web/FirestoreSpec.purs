@@ -19,7 +19,7 @@ import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
 import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
 import Web.Firestore.DocumentData (DocumentData(..))
-import Web.Firestore.DocumentValue (DocumentValue(..))
+import Web.Firestore.DocumentValue (ArrayEntry(..), ArrayValue(..), DocumentValue(..), MapValue(..))
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.Options (Options, apiKey, appId, authDomain, databaseUrl, messagingSenderId, options, storageBucket)
@@ -133,10 +133,22 @@ suite = do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               maybeDocRef `shouldSatisfy` isJust
 
-    let document = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
+    let mapDocument = MapValue (fromFoldable [ "mapText"    /\ (PrimitiveDocument (PVText    "some other text"))
+                                             , "mapInteger" /\ (PrimitiveDocument (PVInteger 42               ))
+                                             ])
+        arrayMapDocument = MapValue (fromFoldable [ "arrayMapNull" /\ (PrimitiveDocument (PVNull))
+                                                  , "arrayMapBool" /\ (PrimitiveDocument (PVBoolean false))
+                                                  ])
+        document = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
                                               , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
                                               , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
-                                              , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))])
+                                              , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))
+                                              , "null"    /\ (PrimitiveDocument (PVNull               ))
+                                              , "map"     /\ (MapDocument       mapDocument)
+                                              , "array"   /\ (ArrayDocument     (ArrayValue [ PrimitiveArrayValue (PVFloat 273.15)
+                                                                                            , MapArrayValue arrayMapDocument
+                                                                                            ]))
+                                              ])
 
     it "sets data correctly with no option" do
       testOptions <- buildTestOptions
