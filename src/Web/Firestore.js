@@ -91,6 +91,12 @@ exports.setImpl = function (documentReference, data, setOptions) {
   }
 }
 
+exports.deleteImpl = function (documentReference) {
+  return function () {
+    return documentReference.delete()
+  }
+}
+
 exports.getImpl = function (documentReference, getOptions) {
   return function () {
     // optional arguments should be passed as `undefined` and not as `null`

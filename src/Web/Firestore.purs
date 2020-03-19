@@ -3,6 +3,7 @@ module Web.Firestore
 , DocumentReference
 , DocumentSnapshot
 , Firestore
+, delete
 , deleteApp
 , doc
 , firestore
@@ -92,6 +93,11 @@ foreign import setImpl :: forall a. Fn3 (DocumentReference a) Json (Nullable Set
 
 set :: forall a. EncodeJson a => DocumentReference a -> a -> Maybe SetOptions -> Effect (Promise Unit)
 set docRef a options = runFn3 setImpl docRef (encodeJson a) (toNullable options)
+
+foreign import deleteImpl :: forall a. Fn1 (DocumentReference a) (Effect (Promise Unit))
+
+delete :: forall a. DocumentReference a -> Effect (Promise Unit)
+delete = runFn1 deleteImpl
 
 foreign import data DocumentSnapshot :: Type -> Type
 

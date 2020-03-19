@@ -17,7 +17,7 @@ import Node.Process (lookupEnv)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
-import Web.Firestore (deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
+import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (DocumentValue(..))
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
@@ -334,3 +334,27 @@ suite = do
                   result <- liftEffect $ snapshotData snapshot (Just $ SnapshotOptions Previous)
 
                   result `shouldEqual` Just document
+
+    it "deletes correctly document data" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test19")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  setPromise <- liftEffect $ set docRef document Nothing
+                  getPromise <- liftEffect $ get docRef Nothing
+                  deletePromise <- liftEffect $ delete docRef
+                  toAff setPromise
+                  toAff deletePromise
+                  snapshot <- toAff getPromise
+                  result <- liftEffect $ snapshotData snapshot Nothing
+
+                  result `shouldEqual` Nothing
