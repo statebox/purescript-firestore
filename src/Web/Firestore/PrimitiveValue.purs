@@ -1,70 +1,79 @@
-module Web.Firestore.PrimitiveValue where
+module Web.Firestore.PrimitiveValue
+( PrimitiveValue
+, evalPrimitiveValue
+, pvBoolean
+, pvDateTime
+, pvGeographicalPoint
+, pvNull
+, pvNumber
+, pvReference
+, pvText
+) where
 
-import Prelude
-import Control.Alt ((<|>))
-import Data.Argonaut (class DecodeJson, class EncodeJson, caseJsonNull, decodeJson, encodeJson, jsonNull)
-import Data.Either (Either(..))
+import Data.Function.Uncurried (Fn0, Fn1, Fn8, runFn0, runFn1, runFn8)
 
-import Web.Firestore.ByteString (FSByteString)
-import Web.Firestore.LatLon (Lat, Lon)
-import Web.Firestore.PreciseDateTime (FSPreciseDateTime)
+import Web.Firestore.DocumentReference (DocumentReference)
+import Web.Firestore.GeographicalPoint (GeographicalPoint)
+import Web.Firestore.Timestamp (Timestamp)
 
-data PrimitiveValue
-  = PVBoolean Boolean
-  | PVBytes FSByteString
-  -- | Firestore is precise only up to microseconds
-  | PVDateTime FSPreciseDateTime
-  | PVFloat Number
-  | PVGeographicalPoint Lat Lon
-  | PVInteger Int
-  | PVNull
-  | PVReference String
-  | PVText String
+foreign import data PrimitiveValue :: Type
 
-instance encodeJsonPrimitiveValue :: EncodeJson PrimitiveValue where
-  encodeJson = case _ of
-    PVBoolean           b       -> encodeJson b
-    PVBytes             bs      -> encodeJson bs
-    PVDateTime          dt      -> encodeJson dt
-    PVFloat             n       -> encodeJson n
-    PVGeographicalPoint lat lon -> encodeJson { lat: lat, lon: lon }
-    PVInteger           i       -> encodeJson i
-    PVNull                      -> jsonNull
-    PVReference         s       -> encodeJson s
-    PVText              s       -> encodeJson s
+foreign import pvBooleanImpl :: Fn1 Boolean PrimitiveValue
 
-instance decodeJsonPrimitiveValue :: DecodeJson PrimitiveValue where
-  decodeJson json
-    =   (PVBoolean           <$> decodeJson json)
-    -- <|> (PVBytes             <$> decodeJson json) -- TODO: how do I decode bytes?
-    -- <|> (PVDateTime          <$> decodeJson json) -- TODO: how doe we parse a DateTime? how is it represented in Firestore?
-    <|> (PVInteger           <$> decodeJson json)
-    <|> (PVFloat             <$> decodeJson json)
-    <|> ((\({lat: lat, lon: lon} :: {lat:: Lat, lon:: Lon}) -> PVGeographicalPoint lat lon) <$> decodeJson json)
-    <|> (caseJsonNull (Left "not null") (const $ Right PVNull) json)
-    -- <|> (PVReference         <$> decodeJson json) -- TODO: parse only strings with the correct format
-    <|> (PVText              <$> decodeJson json)
+pvBoolean :: Boolean -> PrimitiveValue
+pvBoolean = runFn1 pvBooleanImpl
 
-instance showPrimitiveValue :: Show PrimitiveValue where
-  show = case _ of
-    PVBoolean           b       -> show b
-    PVBytes             bs      -> show bs
-    PVDateTime          dt      -> show dt
-    PVFloat             n       -> show n
-    PVGeographicalPoint lat lon -> show { lat: lat, lon: lon }
-    PVInteger           i       -> show i
-    PVNull                      -> "null"
-    PVReference         s       -> show s
-    PVText              s       -> show s
+-- pvBytes :: FSByteString -> PrimitiveValue
+-- pvBytes = undefined
 
-instance eqPrimitiveValue :: Eq PrimitiveValue where
-  eq (PVBoolean           b1       ) (PVBoolean           b2       ) = eq b1  b2
-  eq (PVBytes             bs1      ) (PVBytes             bs2      ) = eq bs1 bs2
-  eq (PVDateTime          dt1      ) (PVDateTime          dt2      ) = eq dt1 dt2
-  eq (PVFloat             f1       ) (PVFloat             f2       ) = eq f1  f2
-  eq (PVGeographicalPoint lat1 lon1) (PVGeographicalPoint lat2 lon2) = eq lat1 lat2 && eq lon1 lon2
-  eq (PVInteger           i1       ) (PVInteger           i2       ) = eq i1  i2
-  eq (PVNull                       ) (PVNull                       ) = true
-  eq (PVReference         r1       ) (PVReference         r2       ) = eq r1  r2
-  eq (PVText              t1       ) (PVText              t2       ) = eq t1  t2
-  eq _                               _                               = false
+foreign import pvDateTimeImpl :: Fn1 Timestamp PrimitiveValue
+
+pvDateTime :: Timestamp -> PrimitiveValue
+pvDateTime ts = runFn1 pvDateTimeImpl ts
+
+foreign import pvGeographicalPointImpl :: Fn1 GeographicalPoint PrimitiveValue
+
+pvGeographicalPoint :: GeographicalPoint -> PrimitiveValue
+pvGeographicalPoint = runFn1 pvGeographicalPointImpl
+
+foreign import pvNullImpl :: Fn0 PrimitiveValue
+
+pvNull :: PrimitiveValue
+pvNull = runFn0 pvNullImpl
+
+foreign import pvNumberImpl :: Fn1 Number PrimitiveValue
+
+pvNumber :: Number -> PrimitiveValue
+pvNumber = runFn1 pvNumberImpl
+
+foreign import pvReferenceImpl :: forall a. Fn1 (DocumentReference a) PrimitiveValue
+
+pvReference :: forall a. DocumentReference a -> PrimitiveValue
+pvReference = runFn1 pvReferenceImpl
+
+foreign import pvTextImpl :: Fn1 String PrimitiveValue
+
+pvText :: String -> PrimitiveValue
+pvText = runFn1 pvTextImpl
+
+foreign import evalPrimitiveValueImpl :: forall a b. Fn8
+  (Boolean -> a)
+  (Timestamp -> a)
+  (GeographicalPoint -> a)
+  a
+  (Number -> a)
+  (DocumentReference b -> a)
+  (String -> a)
+  PrimitiveValue
+  a
+
+evalPrimitiveValue :: forall a b.
+  (Boolean -> a) ->
+  (Timestamp -> a) ->
+  (GeographicalPoint -> a) ->
+  a ->
+  (Number -> a) ->
+  (DocumentReference b -> a) ->
+  (String -> a) ->
+  PrimitiveValue -> a
+evalPrimitiveValue = runFn8 evalPrimitiveValueImpl

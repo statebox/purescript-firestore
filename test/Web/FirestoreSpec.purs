@@ -1,32 +1,36 @@
 module Test.Web.FirestoreSpec where
 
 import Prelude
+
 import Control.Monad.Error.Class (throwError)
 import Control.Promise (toAff)
 import Data.Either (Either(..), either, isLeft, isRight)
 import Data.Lens as Lens
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Dotenv (loadFile) as Dotenv
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Foreign.Object (fromFoldable)
+import Foreign.Object (empty, fromFoldable)
 import Node.Process (lookupEnv)
+import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
-
 import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
 import Web.Firestore.DocumentData (DocumentData(..))
-import Web.Firestore.DocumentValue (ArrayEntry(..), ArrayValue(..), DocumentValue(..), MapValue(..))
+import Web.Firestore.DocumentValue (arrayDocument, mapArrayValue, mapDocument, primitiveArrayValue, primitiveDocument)
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
+import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
+import Web.Firestore.LatLon (lat, lon)
 import Web.Firestore.Options (Options, apiKey, appId, authDomain, databaseUrl, messagingSenderId, options, storageBucket)
 import Web.Firestore.Path (pathFromString)
-import Web.Firestore.PrimitiveValue (PrimitiveValue(..))
+import Web.Firestore.PrimitiveValue (pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 import Web.Firestore.SetOptions (mergeFieldsOption, mergeOption, stringMergeField, fieldPathMergeField)
 import Web.Firestore.SnapshotOptions (ServerTimestamps(..), SnapshotOptions(..))
+import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
 
 buildTestOptions :: Aff Options
 buildTestOptions = do
@@ -133,22 +137,25 @@ suite = do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               maybeDocRef `shouldSatisfy` isJust
 
-    let mapDocument = MapValue (fromFoldable [ "mapText"    /\ (PrimitiveDocument (PVText    "some other text"))
-                                             , "mapInteger" /\ (PrimitiveDocument (PVInteger 42               ))
-                                             ])
-        arrayMapDocument = MapValue (fromFoldable [ "arrayMapNull" /\ (PrimitiveDocument (PVNull))
-                                                  , "arrayMapBool" /\ (PrimitiveDocument (PVBoolean false))
+    let mapDoc = mapDocument (fromFoldable [ "mapText"    /\ (primitiveDocument (pvText   "some other text"))
+                                           , "mapInteger" /\ (primitiveDocument (pvNumber 42.0             ))
+                                           ])
+        arrayMapDoc = mapArrayValue (fromFoldable [ "arrayMapNull" /\ (primitiveDocument (pvNull))
+                                                  , "arrayMapBool" /\ (primitiveDocument (pvBoolean false))
                                                   ])
-        document = DocumentData (fromFoldable [ "text"    /\ (PrimitiveDocument (PVText    "some text"))
-                                              , "integer" /\ (PrimitiveDocument (PVInteger 42         ))
-                                              , "float"   /\ (PrimitiveDocument (PVFloat   273.15     ))
-                                              , "bool"    /\ (PrimitiveDocument (PVBoolean true       ))
-                                              , "null"    /\ (PrimitiveDocument (PVNull               ))
-                                              , "map"     /\ (MapDocument       mapDocument)
-                                              , "array"   /\ (ArrayDocument     (ArrayValue [ PrimitiveArrayValue (PVFloat 273.15)
-                                                                                            , MapArrayValue arrayMapDocument
-                                                                                            ]))
-                                              ])
+        ts = timestamp (seconds 1584696645.0) (microseconds 123456)
+        document = \ref -> DocumentData (fromFoldable [ "text"     /\ (primitiveDocument (pvText    "some text"                       ))
+                                                      , "number"   /\ (primitiveDocument (pvNumber  273.15                            ))
+                                                      , "bool"     /\ (primitiveDocument (pvBoolean true                              ))
+                                                      , "null"     /\ (primitiveDocument (pvNull                                      ))
+                                                      , "point"    /\ (primitiveDocument (pvGeographicalPoint (point (unsafePartial $ fromJust $ lat 45.666) (unsafePartial $ fromJust $ lon 12.25))))
+                                                      , "datetime" /\ (primitiveDocument (pvDateTime ts                         ))
+                                                      , "map"      /\ mapDoc
+                                                      , "array"    /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
+                                                                                    , arrayMapDoc
+                                                                                    ])
+                                                      , "reference" /\ (primitiveDocument (pvReference ref))
+                                                      ])
 
     it "sets data correctly with no option" do
       testOptions <- buildTestOptions
@@ -164,7 +171,8 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   toAff setPromise
 
     it "sets data correctly with merge option" do
@@ -181,7 +189,8 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document (Just $ mergeOption true)
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc (Just $ mergeOption true)
                   toAff setPromise
 
     it "sets data correctly with mergeFields option" do
@@ -198,9 +207,10 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document (Just $ mergeFieldsOption [ stringMergeField "text"
-                                                                                           , fieldPathMergeField ["float"]
-                                                                                           ])
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc (Just $ mergeFieldsOption [ stringMergeField "text"
+                                                                                      , fieldPathMergeField ["number"]
+                                                                                      ])
                   toAff setPromise
 
     it "gets existing data correctly with default options" do
@@ -217,7 +227,8 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef Nothing
                   toAff setPromise
                   snapshot <- toAff getPromise
@@ -237,7 +248,8 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef (Just $ GetOptions Cache)
                   toAff setPromise
                   snapshot <- toAff getPromise
@@ -257,13 +269,14 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef (Just $ GetOptions Server)
                   toAff setPromise
                   snapshot <- toAff getPromise
                   pure unit
 
-    it "gets data with was not set before" do
+    it "gets data which was not set before" do
       testOptions <- buildTestOptions
       eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test15")
       case eitherErrorApp of
@@ -295,13 +308,14 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef Nothing
                   toAff setPromise
                   snapshot <- toAff getPromise
                   result <- liftEffect $ snapshotData snapshot Nothing
 
-                  result `shouldEqual` Just document
+                  result `shouldEqual` doc
 
     it "sets and gets data correctly with estimate timestamp" do
       testOptions <- buildTestOptions
@@ -317,13 +331,14 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef Nothing
                   toAff setPromise
                   snapshot <- toAff getPromise
                   result <- liftEffect $ snapshotData snapshot (Just $ SnapshotOptions Estimate)
 
-                  result `shouldEqual` Just document
+                  result `shouldEqual` doc
 
     it "sets and gets data correctly with previous timestamp" do
       testOptions <- buildTestOptions
@@ -339,13 +354,14 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef Nothing
                   toAff setPromise
                   snapshot <- toAff getPromise
                   result <- liftEffect $ snapshotData snapshot (Just $ SnapshotOptions Previous)
 
-                  result `shouldEqual` Just document
+                  result `shouldEqual` doc
 
     it "deletes correctly document data" do
       testOptions <- buildTestOptions
@@ -361,7 +377,8 @@ suite = do
               case maybeDocRef of
                 Nothing     -> fail "invalid path"
                 Just docRef -> do
-                  setPromise <- liftEffect $ set docRef document Nothing
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
                   getPromise <- liftEffect $ get docRef Nothing
                   deletePromise <- liftEffect $ delete docRef
                   toAff setPromise
@@ -369,4 +386,4 @@ suite = do
                   snapshot <- toAff getPromise
                   result <- liftEffect $ snapshotData snapshot Nothing
 
-                  result `shouldEqual` Nothing
+                  result `shouldEqual` DocumentData empty

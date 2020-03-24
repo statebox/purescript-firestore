@@ -1,32 +1,55 @@
-module Web.Firestore.LatLon where
+module Web.Firestore.LatLon
+( Lat
+, Lon
+, lat
+, lon
+) where
 
 import Prelude
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
+import Data.Maybe (Maybe(..))
+import Test.QuickCheck (class Arbitrary, arbitrary)
+import Test.QuickCheck.Gen (suchThat)
 
 newtype Lat = Lat Number
 
-instance encodeJsonLat :: EncodeJson Lat where
-  encodeJson (Lat n) = encodeJson n
+derive newtype instance eqLat :: Eq Lat
 
-instance decodeJsonLat :: DecodeJson Lat where
-  decodeJson json = Lat <$> decodeJson json
+derive newtype instance ordLat :: Ord Lat
+
+instance boundedLat :: Bounded Lat where
+  bottom = Lat (-90.0)
+  top = Lat 90.0
+
+lat :: Number -> Maybe Lat
+lat n =
+  if n >= -90.0 && n <= 90.0
+  then Just $ Lat n
+  else Nothing
 
 instance showLat :: Show Lat where
   show (Lat n) = show n
 
-instance eqLat :: Eq Lat where
-  eq (Lat n1) (Lat n2) = eq n1 n2
+instance arbitraryLat :: Arbitrary Lat where
+  arbitrary = Lat <$> arbitrary `suchThat` (\n -> n >= -90.0 && n <= 90.0)
 
 newtype Lon = Lon Number
 
-instance encodeJsonLon :: EncodeJson Lon where
-  encodeJson (Lon n) = encodeJson n
+derive newtype instance eqLon :: Eq Lon
 
-instance decodeJsonLon :: DecodeJson Lon where
-  decodeJson json = Lon <$> decodeJson json
+derive newtype instance ordLon :: Ord Lon
+
+instance boundedLon :: Bounded Lon where
+  bottom = Lon (-180.0)
+  top = Lon 180.0
+
+lon :: Number -> Maybe Lon
+lon n =
+  if n >= -180.0 && n <= 180.0
+  then Just $ Lon n
+  else Nothing
 
 instance showLon :: Show Lon where
   show (Lon n) = show n
 
-instance eqLon :: Eq Lon where
-  eq (Lon n1) (Lon n2) = eq n1 n2
+instance arbitraryLon :: Arbitrary Lon where
+  arbitrary = Lon <$> arbitrary `suchThat` (\n -> n >= -180.0 && n <= 180.0)

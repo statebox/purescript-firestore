@@ -1,6 +1,5 @@
 module Web.Firestore
 ( App
-, DocumentReference
 , DocumentSnapshot
 , Firestore
 , delete
@@ -15,8 +14,8 @@ module Web.Firestore
 
 import Prelude
 import Control.Promise (Promise)
-import Data.Argonaut (class DecodeJson, class EncodeJson, Json, decodeJson, encodeJson)
-import Data.Either (Either(..), hush)
+import Data.Argonaut (Json, encodeJson)
+import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn1, Fn2, Fn3, Fn4, runFn1, runFn2, runFn3, runFn4)
 import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toNullable)
@@ -24,6 +23,7 @@ import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
 
 import Web.Firestore.DocumentData (DocumentData)
+import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.Errors.FirebaseError (FirebaseError, fromFirebaseError, fromString)
 import Web.Firestore.Error.FirestoreError (FirestoreError)
 import Web.Firestore.Errors.InitializeError (InitializeError)
@@ -77,22 +77,15 @@ foreign import firestoreImpl :: Fn3
 firestore :: App -> Effect (Either FirestoreError Firestore)
 firestore app = (fromFirebaseError fromString +++ identity) <$> runFn3 firestoreImpl Left Right app
 
-foreign import data DocumentReference :: Type -> Type
-
-foreign import showDocumentReferenceImpl :: forall a. Fn1 (DocumentReference a) String
-
-instance showDocumentReference :: Show a => Show (DocumentReference a) where
-  show = runFn1 showDocumentReferenceImpl
-
 foreign import docImpl :: Fn2 Firestore String (Effect (DocumentReference DocumentData))
 
 doc :: Firestore -> Path -> Effect (DocumentReference DocumentData)
 doc fs path = runFn2 docImpl fs (show path)
 
-foreign import setImpl :: forall a. Fn3 (DocumentReference a) Json (Nullable SetOptions) (Effect (Promise Unit))
+foreign import setImpl ::Fn3 (DocumentReference DocumentData) DocumentData (Nullable SetOptions) (Effect (Promise Unit))
 
-set :: forall a. EncodeJson a => DocumentReference a -> a -> Maybe SetOptions -> Effect (Promise Unit)
-set docRef a options = runFn3 setImpl docRef (encodeJson a) (toNullable options)
+set :: DocumentReference DocumentData -> DocumentData -> Maybe SetOptions -> Effect (Promise Unit)
+set docRef docData options = runFn3 setImpl docRef docData (toNullable options)
 
 foreign import deleteImpl :: forall a. Fn1 (DocumentReference a) (Effect (Promise Unit))
 
@@ -106,7 +99,7 @@ foreign import getImpl :: forall a. Fn2 (DocumentReference a) (Nullable Json) (E
 get :: forall a. DocumentReference a -> Maybe GetOptions -> Effect (Promise (DocumentSnapshot a))
 get docRef options = (runFn2 getImpl) docRef (toNullable $ encodeJson <$> options)
 
-foreign import dataImpl :: forall a. Fn2 (DocumentSnapshot a) (Nullable Json) (Effect Json)
+foreign import dataImpl :: Fn2 (DocumentSnapshot DocumentData) (Nullable Json) (Effect DocumentData)
 
-snapshotData :: forall a. DecodeJson a => DocumentSnapshot a -> Maybe SnapshotOptions -> Effect (Maybe a)
-snapshotData docSnapshot options = hush <<< decodeJson <$> runFn2 dataImpl docSnapshot (toNullable $ encodeJson <$> options)
+snapshotData :: DocumentSnapshot DocumentData -> Maybe SnapshotOptions -> Effect DocumentData
+snapshotData docSnapshot options = runFn2 dataImpl docSnapshot (toNullable $ encodeJson <$> options)

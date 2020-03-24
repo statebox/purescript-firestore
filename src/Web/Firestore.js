@@ -59,15 +59,6 @@ exports.firestoreImpl = function (left, right, app) {
   }
 }
 
-exports.showDocumentReferenceImpl = function (docRef)
-{
-  const ret = {
-    path: docRef._key.path.segments
-  }
-
-  return JSON.stringify(ret)
-}
-
 exports.docImpl = function (firestore, documentPath) {
   return function () {
     return firestore.doc(documentPath)
