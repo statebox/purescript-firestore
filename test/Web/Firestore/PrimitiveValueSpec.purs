@@ -1,13 +1,19 @@
 module Test.Web.Firestore.PrimitiveValueSpec where
 
 import Prelude
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Traversable (sequence)
+import Effect.Class (liftEffect)
 import Test.QuickCheck ((===))
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Assertions (fail, shouldEqual)
 import Test.Spec.QuickCheck (quickCheck)
 
-import Web.Firestore.PrimitiveValue (evalPrimitiveValue, pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber)
+import Test.Web.Firestore.OptionsUtils (buildTestOptions)
+import Web.Firestore (doc, firestore, initializeApp)
+import Web.Firestore.Path (pathFromString)
+import Web.Firestore.PrimitiveValue (evalPrimitiveValue, pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 
 suite :: Spec Unit
 suite = do
@@ -89,3 +95,41 @@ suite = do
         (const Nothing)
         (pvNumber n)
         === Just n
+
+    it "evaluates correctly a reference value" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-other-test")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail $ show "we should have a reference to a document"
+                Just docRef -> evalPrimitiveValue
+                  (const Nothing)
+                  (const Nothing)
+                  (const Nothing)
+                  (const Nothing)
+                  Nothing
+                  (const Nothing)
+                  Just
+                  (const Nothing)
+                  (pvReference docRef)
+                  `shouldEqual` Just docRef
+
+    it "evaluates correctly a text value" $ quickCheck
+      \string -> evalPrimitiveValue
+        (const Nothing)
+        (const Nothing)
+        (const Nothing)
+        (const Nothing)
+        Nothing
+        (const Nothing)
+        (const Nothing)
+        Just
+        (pvText string)
+        === Just string

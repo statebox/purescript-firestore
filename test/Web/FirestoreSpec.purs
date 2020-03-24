@@ -1,23 +1,18 @@
 module Test.Web.FirestoreSpec where
 
 import Prelude
-import Control.Monad.Error.Class (throwError)
 import Control.Promise (toAff)
 import Data.Either (Either(..), either, isLeft, isRight)
-import Data.Lens as Lens
 import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
-import Dotenv (loadFile) as Dotenv
-import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Effect.Exception (error)
 import Foreign.Object (empty, fromFoldable)
-import Node.Process (lookupEnv)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
+import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.DocumentData (DocumentData(..))
@@ -26,33 +21,11 @@ import Web.Firestore.Errors.InitializeError (evalInitializeError)
 import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
-import Web.Firestore.Options (Options, apiKey, appId, authDomain, databaseUrl, messagingSenderId, options, storageBucket)
 import Web.Firestore.Path (pathFromString)
 import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 import Web.Firestore.SetOptions (mergeFieldsOption, mergeOption, stringMergeField, fieldPathMergeField)
 import Web.Firestore.SnapshotOptions (ServerTimestamps(..), SnapshotOptions(..))
 import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
-
-buildTestOptions :: Aff Options
-buildTestOptions = do
-  _ <- Dotenv.loadFile
-  firestoreProjectId         <- liftEffect $ lookupEnv "FIRESTORE_PROJECT_ID"
-  firestoreApiKey            <- liftEffect $ lookupEnv "FIRESTORE_API_KEY"
-  firestoreAppId             <- liftEffect $ lookupEnv "FIRESTORE_APP_ID"
-  firestoreAuthDomain        <- liftEffect $ lookupEnv "FIRESTORE_AUTH_DOMAIN"
-  firestoreDatabaseUrl       <- liftEffect $ lookupEnv "FIRESTORE_DATABASE_URL"
-  firestoreMessagingSenderId <- liftEffect $ lookupEnv "FIRESTORE_MESSAGING_SENDER_ID"
-  firestoreStorageBucket     <- liftEffect $ lookupEnv "FIRESTORE_STORAGE_BUCKET"
-  let maybeOptions = firestoreProjectId <#> (\projectId -> options projectId
-                                             # Lens.set apiKey            firestoreApiKey
-                                             # Lens.set appId             firestoreAppId
-                                             # Lens.set authDomain        firestoreAuthDomain
-                                             # Lens.set databaseUrl       firestoreDatabaseUrl
-                                             # Lens.set messagingSenderId firestoreMessagingSenderId
-                                             # Lens.set storageBucket     firestoreStorageBucket)
-  case maybeOptions of
-    Nothing      -> throwError (error "invalid configuration options")
-    Just options -> pure options
 
 suite :: Spec Unit
 suite = do

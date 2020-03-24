@@ -69,7 +69,13 @@ exports.evalPrimitiveValueImpl = function
       return onNumber(value)
     }
 
-    console.log(value, typeof value)
+    if (value instanceof firebase.firestore.DocumentReference) {
+      return onReference(value)
+    }
 
-    return null
+    if (typeof value === 'string') {
+      return onText(value)
+    }
+
+    throw new Error("Value or an unrecognised type")
 }

@@ -26,7 +26,7 @@ exports.arrayDocumentImpl = function (arrayEntries) {
 
 exports.showDocumentValueImpl = function (doc) {
   if (doc instanceof firebase.firestore.DocumentReference) {
-    return docRef.showDocumentReferenceImpl(doc)
+    return docRef.showImpl(doc)
   }
 
   return JSON.stringify(doc)
