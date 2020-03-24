@@ -1,6 +1,7 @@
 module Web.Firestore.PrimitiveValue
 ( PrimitiveValue
 , evalPrimitiveValue
+, pvBytes
 , pvBoolean
 , pvDateTime
 , pvGeographicalPoint
@@ -10,8 +11,9 @@ module Web.Firestore.PrimitiveValue
 , pvText
 ) where
 
-import Data.Function.Uncurried (Fn0, Fn1, Fn8, runFn0, runFn1, runFn8)
+import Data.Function.Uncurried (Fn0, Fn1, Fn9, runFn0, runFn1, runFn9)
 
+import Web.Firestore.Blob (Blob)
 import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.GeographicalPoint (GeographicalPoint)
 import Web.Firestore.Timestamp (Timestamp)
@@ -23,8 +25,10 @@ foreign import pvBooleanImpl :: Fn1 Boolean PrimitiveValue
 pvBoolean :: Boolean -> PrimitiveValue
 pvBoolean = runFn1 pvBooleanImpl
 
--- pvBytes :: FSByteString -> PrimitiveValue
--- pvBytes = undefined
+foreign import pvBytesImpl :: Fn1 Blob PrimitiveValue
+
+pvBytes :: Blob -> PrimitiveValue
+pvBytes = runFn1 pvBytesImpl
 
 foreign import pvDateTimeImpl :: Fn1 Timestamp PrimitiveValue
 
@@ -56,7 +60,8 @@ foreign import pvTextImpl :: Fn1 String PrimitiveValue
 pvText :: String -> PrimitiveValue
 pvText = runFn1 pvTextImpl
 
-foreign import evalPrimitiveValueImpl :: forall a b. Fn8
+foreign import evalPrimitiveValueImpl :: forall a b. Fn9
+  (Blob -> a)
   (Boolean -> a)
   (Timestamp -> a)
   (GeographicalPoint -> a)
@@ -68,6 +73,7 @@ foreign import evalPrimitiveValueImpl :: forall a b. Fn8
   a
 
 evalPrimitiveValue :: forall a b.
+  (Blob -> a) ->
   (Boolean -> a) ->
   (Timestamp -> a) ->
   (GeographicalPoint -> a) ->
@@ -76,4 +82,4 @@ evalPrimitiveValue :: forall a b.
   (DocumentReference b -> a) ->
   (String -> a) ->
   PrimitiveValue -> a
-evalPrimitiveValue = runFn8 evalPrimitiveValueImpl
+evalPrimitiveValue = runFn9 evalPrimitiveValueImpl

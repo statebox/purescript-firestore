@@ -5,6 +5,7 @@ module Web.Firestore.Blob
 
 import Prelude
 import Data.Function.Uncurried (Fn1, Fn2, runFn1, runFn2)
+import Test.QuickCheck (class Arbitrary, arbitrary)
 
 foreign import data Blob :: Type
 
@@ -22,3 +23,6 @@ foreign import showImpl :: Fn1 Blob String
 
 instance showBlob :: Show Blob where
   show = runFn1 showImpl
+
+instance arbitraryBlob :: Arbitrary Blob where
+  arbitrary = blob <$> arbitrary

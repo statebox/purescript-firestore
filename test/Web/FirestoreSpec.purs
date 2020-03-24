@@ -1,7 +1,6 @@
 module Test.Web.FirestoreSpec where
 
 import Prelude
-
 import Control.Monad.Error.Class (throwError)
 import Control.Promise (toAff)
 import Data.Either (Either(..), either, isLeft, isRight)
@@ -18,7 +17,9 @@ import Node.Process (lookupEnv)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
+
 import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
+import Web.Firestore.Blob (blob)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (arrayDocument, mapArrayValue, mapDocument, primitiveArrayValue, primitiveDocument)
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
@@ -27,7 +28,7 @@ import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
 import Web.Firestore.Options (Options, apiKey, appId, authDomain, databaseUrl, messagingSenderId, options, storageBucket)
 import Web.Firestore.Path (pathFromString)
-import Web.Firestore.PrimitiveValue (pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
+import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 import Web.Firestore.SetOptions (mergeFieldsOption, mergeOption, stringMergeField, fieldPathMergeField)
 import Web.Firestore.SnapshotOptions (ServerTimestamps(..), SnapshotOptions(..))
 import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
@@ -144,17 +145,20 @@ suite = do
                                                   , "arrayMapBool" /\ (primitiveDocument (pvBoolean false))
                                                   ])
         ts = timestamp (seconds 1584696645.0) (microseconds 123456)
-        document = \ref -> DocumentData (fromFoldable [ "text"     /\ (primitiveDocument (pvText    "some text"                       ))
-                                                      , "number"   /\ (primitiveDocument (pvNumber  273.15                            ))
-                                                      , "bool"     /\ (primitiveDocument (pvBoolean true                              ))
-                                                      , "null"     /\ (primitiveDocument (pvNull                                      ))
-                                                      , "point"    /\ (primitiveDocument (pvGeographicalPoint (point (unsafePartial $ fromJust $ lat 45.666) (unsafePartial $ fromJust $ lon 12.25))))
-                                                      , "datetime" /\ (primitiveDocument (pvDateTime ts                         ))
-                                                      , "map"      /\ mapDoc
-                                                      , "array"    /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
-                                                                                    , arrayMapDoc
-                                                                                    ])
-                                                      , "reference" /\ (primitiveDocument (pvReference ref))
+        geoPoint = point (unsafePartial $ fromJust $ lat 45.666) (unsafePartial $ fromJust $ lon 12.25)
+        bytes = blob "ꘚ見꿮嬲霃椮줵"
+        document = \ref -> DocumentData (fromFoldable [ "text"      /\ (primitiveDocument (pvText              "some text"))
+                                                      , "number"    /\ (primitiveDocument (pvNumber            273.15     ))
+                                                      , "bool"      /\ (primitiveDocument (pvBoolean           true       ))
+                                                      , "null"      /\ (primitiveDocument (pvNull                         ))
+                                                      , "point"     /\ (primitiveDocument (pvGeographicalPoint geoPoint   ))
+                                                      , "datetime"  /\ (primitiveDocument (pvDateTime          ts         ))
+                                                      , "map"       /\ mapDoc
+                                                      , "array"     /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
+                                                                                      , arrayMapDoc
+                                                                                      ])
+                                                      , "reference" /\ (primitiveDocument (pvReference         ref        ))
+                                                      , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
                                                       ])
 
     it "sets data correctly with no option" do

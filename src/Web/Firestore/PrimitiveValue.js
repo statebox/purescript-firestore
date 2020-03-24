@@ -2,6 +2,10 @@
 
 const firebase = require('firebase')
 
+exports.pvBytesImpl = function (blob) {
+  return blob
+}
+
 exports.pvBooleanImpl = function (boolean) {
   return boolean
 }
@@ -31,7 +35,8 @@ exports.pvTextImpl = function (text) {
 }
 
 exports.evalPrimitiveValueImpl = function
-  ( onBool
+  ( onBytes
+  , onBool
   , onDateTime
   , onGeographicalPoint
   , onNull
@@ -40,6 +45,10 @@ exports.evalPrimitiveValueImpl = function
   , onText
   , value
   ) {
+    if (value instanceof firebase.firestore.Blob) {
+      return onBytes(value)
+    }
+
     if (typeof value === 'boolean') {
       return onBool(value)
     }
