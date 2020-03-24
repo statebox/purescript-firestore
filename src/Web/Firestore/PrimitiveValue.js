@@ -35,8 +35,8 @@ exports.pvTextImpl = function (text) {
 }
 
 exports.evalPrimitiveValueImpl = function
-  ( onBytes
-  , onBool
+  ( onBool
+  , onBytes
   , onDateTime
   , onGeographicalPoint
   , onNull
@@ -59,6 +59,10 @@ exports.evalPrimitiveValueImpl = function
 
     if (value instanceof firebase.firestore.GeoPoint) {
       return onGeographicalPoint(value)
+    }
+
+    if (value === null) {
+      return onNull
     }
 
     if (typeof value === 'number') {

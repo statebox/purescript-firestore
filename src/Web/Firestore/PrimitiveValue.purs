@@ -61,8 +61,8 @@ pvText :: String -> PrimitiveValue
 pvText = runFn1 pvTextImpl
 
 foreign import evalPrimitiveValueImpl :: forall a b. Fn9
-  (Blob -> a)
   (Boolean -> a)
+  (Blob -> a)
   (Timestamp -> a)
   (GeographicalPoint -> a)
   a
@@ -73,8 +73,8 @@ foreign import evalPrimitiveValueImpl :: forall a b. Fn9
   a
 
 evalPrimitiveValue :: forall a b.
-  (Blob -> a) ->
   (Boolean -> a) ->
+  (Blob -> a) ->
   (Timestamp -> a) ->
   (GeographicalPoint -> a) ->
   a ->

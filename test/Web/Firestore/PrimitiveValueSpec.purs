@@ -4,30 +4,18 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Test.QuickCheck ((===))
 import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.QuickCheck (quickCheck)
 
-import Web.Firestore.PrimitiveValue (evalPrimitiveValue, pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNumber)
+import Web.Firestore.PrimitiveValue (evalPrimitiveValue, pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber)
 
 suite :: Spec Unit
 suite = do
   describe "PrimitiveValue" do
-    it "evaluates correctly a bytestring value" $ quickCheck
-      \blob -> evalPrimitiveValue
-        Just
-        (const Nothing)
-        (const Nothing)
-        (const Nothing)
-        Nothing
-        (const Nothing)
-        (const Nothing)
-        (const Nothing)
-        (pvBytes blob)
-        === Just blob
-
     it "evaluates correctly a boolean value" $ quickCheck
       \bool -> evalPrimitiveValue
-        (const Nothing)
         Just
+        (const Nothing)
         (const Nothing)
         (const Nothing)
         Nothing
@@ -36,6 +24,19 @@ suite = do
         (const Nothing)
         (pvBoolean bool)
         === Just bool
+
+    it "evaluates correctly a bytestring value" $ quickCheck
+      \blob -> evalPrimitiveValue
+        (const Nothing)
+        Just
+        (const Nothing)
+        (const Nothing)
+        Nothing
+        (const Nothing)
+        (const Nothing)
+        (const Nothing)
+        (pvBytes blob)
+        === Just blob
 
     it "evaluates correctly a datetime value" $ quickCheck
       \timestamp -> evalPrimitiveValue
@@ -62,6 +63,19 @@ suite = do
         (const Nothing)
         (pvGeographicalPoint point)
         === Just point
+
+    it "evaluates correctly a null value" do
+      evalPrimitiveValue
+        (const Nothing)
+        (const Nothing)
+        (const Nothing)
+        (const Nothing)
+        (Just unit)
+        (const Nothing)
+        (const Nothing)
+        (const Nothing)
+        (pvNull)
+        `shouldEqual` Just unit
 
     it "evaluates correctly a numeric value" $ quickCheck
       \n -> evalPrimitiveValue
