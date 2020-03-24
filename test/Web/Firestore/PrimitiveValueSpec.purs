@@ -1,11 +1,11 @@
 module Test.Web.Firestore.PrimitiveValueSpec where
 
 import Prelude
-
 import Data.Maybe (Maybe(..))
 import Test.QuickCheck ((===))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.QuickCheck (quickCheck)
+
 import Web.Firestore.PrimitiveValue (evalPrimitiveValue, pvBoolean, pvDateTime, pvGeographicalPoint, pvNumber)
 
 suite :: Spec Unit

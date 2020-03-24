@@ -75,12 +75,12 @@ instance showTimestamp :: Show Timestamp where
 instance arbitraryTimestamp :: Arbitrary Timestamp where
   arbitrary = timestamp <$> arbitrary <*> arbitrary
 
-foreign import timestampSecondsImpl :: Fn1 Timestamp Seconds
+foreign import timestampSecondsImpl :: Fn1 Timestamp Number
 
 timestampSeconds :: Timestamp -> Seconds
-timestampSeconds = runFn1 timestampSecondsImpl
+timestampSeconds = Seconds <<< runFn1 timestampSecondsImpl
 
-foreign import timestampMicrosecondsImpl :: Fn1 Timestamp Microseconds
+foreign import timestampMicrosecondsImpl :: Fn1 Timestamp Int
 
 timestampMicroseconds :: Timestamp -> Microseconds
-timestampMicroseconds = runFn1 timestampMicrosecondsImpl
+timestampMicroseconds = Microseconds <<< runFn1 timestampMicrosecondsImpl

@@ -11,10 +11,12 @@ import Test.Web.FirestoreSpec as Firestore
 import Test.Web.Firestore.OptionsSpec as Options
 import Test.Web.Firestore.PathSpec as Path
 import Test.Web.Firestore.PrimitiveValueSpec as PrimitiveValue
+import Test.Web.Firestore.TimestampSpec as Timestamp
 
 main :: Effect (Fiber Unit)
 main = launchAff $ runSpec [consoleReporter] do
   Options.suite
   Path.suite
   PrimitiveValue.suite
+  Timestamp.suite
   Firestore.suite
