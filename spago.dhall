@@ -6,7 +6,6 @@
     [ "aff-promise"
     , "argonaut"
     , "arrays"
-    , "bytestrings"
     , "dotenv"
     , "effect"
     , "exceptions"

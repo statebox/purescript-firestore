@@ -1,11 +1,11 @@
 module Test.Web.Firestore.OptionsSpec where
 
 import Prelude
-
 import Data.Lens as Lens
 import Test.QuickCheck ((===))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.QuickCheck (quickCheck)
+
 import Web.Firestore.Options (Options(..), apiKey, appId, authDomain, databaseUrl, measurementId, messagingSenderId, options, storageBucket)
 
 suite :: Spec Unit
