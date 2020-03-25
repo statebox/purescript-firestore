@@ -2,5 +2,6 @@
 package-lock.json
 .spago/
 /output/
+/generated-docs/
 .psci_modules/
 .env
