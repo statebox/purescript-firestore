@@ -107,3 +107,19 @@ exports.dataImpl = function (documentSnapshot, snapshotOptions) {
     return ret === undefined ? null : ret
   }
 }
+
+exports.onSnapshotImpl = function (docRef, observer, options) {
+  if (options === null) {
+    return function () {
+      return function () {
+        return docRef.onSnapshot(observer)
+      }
+    }
+  }
+
+  return function () {
+    return function () {
+      return docRef.onSnapshot(options, observer)
+    }
+  }
+}
