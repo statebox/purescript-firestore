@@ -1,7 +1,5 @@
 "use strict";
 
-const lodash = require('lodash')
-
 const docRefPath = function (docRef) {
   const segments = docRef._key.path.segments
   const offset   = docRef._key.path.offset
@@ -11,7 +9,7 @@ const docRefPath = function (docRef) {
 }
 
 exports.eqImpl = function (docRef1, docRef2) {
-  return lodash.isEqual(docRefPath(docRef1), docRefPath(docRef2))
+  return docRef1.isEqual(docRef2)
 }
 
 exports.showImpl = function (docRef) {
