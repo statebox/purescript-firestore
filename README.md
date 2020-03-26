@@ -32,6 +32,24 @@ Firestore does not offer a local version for testing, therefore we need to use a
 
 To configure the Firestore instance, copy the `.env.example` file into a `.env` file and add the parameters of your instance.
 
+Moreover, you should configure your instance so that the documents used in the tests are actually accessible.
+Something along this lines should work:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /collection/test/{document=**} {
+      allow read, write: if true;
+    }
+
+    match /collection/other-test/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
 Then run the tests using
 
 ```
