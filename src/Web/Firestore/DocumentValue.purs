@@ -9,7 +9,7 @@ module Web.Firestore.DocumentValue
 ) where
 
 import Prelude
-import Data.Function.Uncurried (Fn1, Fn2, runFn1, runFn2)
+import Data.Function.Uncurried (Fn1, Fn4, Fn5, runFn1, runFn4, runFn5)
 import Foreign.Object (Object)
 
 import Web.Firestore.PrimitiveValue (PrimitiveValue)
@@ -26,17 +26,20 @@ foreign import mapArrayValueImpl :: Fn1 (Object DocumentValue) ArrayEntry
 mapArrayValue :: Object DocumentValue -> ArrayEntry
 mapArrayValue = runFn1 mapArrayValueImpl
 
+foreign import eqArrayEntryImpl :: Fn4
+  (PrimitiveValue       -> PrimitiveValue       -> Boolean)
+  (Object DocumentValue -> Object DocumentValue -> Boolean)
+   ArrayEntry              ArrayEntry              Boolean
+
+instance eqArrayEntry :: Eq ArrayEntry where
+  eq = runFn4 eqArrayEntryImpl (\a b -> eq a b) (\a b -> eq a b)
+
 foreign import data DocumentValue :: Type
 
 foreign import showDocumentValueImpl :: Fn1 DocumentValue String
 
 instance showDocumentValue :: Show DocumentValue where
   show = runFn1 showDocumentValueImpl
-
-foreign import eqDocumentValueImpl :: Fn2 DocumentValue DocumentValue Boolean
-
-instance eqDocumentValue :: Eq DocumentValue where
-  eq = runFn2 eqDocumentValueImpl
 
 foreign import primitiveDocumentImpl :: Fn1 PrimitiveValue DocumentValue
 
@@ -52,3 +55,12 @@ foreign import arrayDocumentImpl :: Fn1 (Array ArrayEntry) DocumentValue
 
 arrayDocument :: Array ArrayEntry -> DocumentValue
 arrayDocument = runFn1 arrayDocumentImpl
+
+foreign import eqDocumentValueImpl :: Fn5
+  (PrimitiveValue       -> PrimitiveValue       -> Boolean)
+  (Object DocumentValue -> Object DocumentValue -> Boolean)
+  (Array ArrayEntry     -> Array ArrayEntry     -> Boolean)
+   DocumentValue           DocumentValue           Boolean
+
+instance eqDocumentValue :: Eq DocumentValue where
+  eq = runFn5 eqDocumentValueImpl (\a b -> eq a b) (\a b -> eq a b) (\a b -> eq a b)

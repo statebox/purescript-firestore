@@ -1,7 +1,6 @@
 "use strict";
 
 const firebase = require('firebase')
-const lodash = require('lodash')
 const docRef = require("../Web.Firestore.DocumentReference")
 
 exports.primitiveArrayValueImpl = function (primitiveValue) {
@@ -10,6 +9,18 @@ exports.primitiveArrayValueImpl = function (primitiveValue) {
 
 exports.mapArrayValueImpl = function (objectDocuments) {
   return objectDocuments
+}
+
+exports.eqArrayEntryImpl = function (onPrimitiveValue, onMap, doc1, doc2) {
+  if (onPrimitiveValue(doc1, doc2)) {
+    return true
+  }
+
+  if (typeof doc1 === 'object' && typeof doc2 === 'object') {
+    return onMap(doc1, doc2)
+  }
+
+  return false
 }
 
 exports.primitiveDocumentImpl = function (primitiveValue) {
@@ -32,6 +43,18 @@ exports.showDocumentValueImpl = function (doc) {
   return JSON.stringify(doc)
 }
 
-exports.eqDocumentValueImpl = function (doc1, doc2) {
-  return lodash.isEqual(doc1, doc2)
+exports.eqDocumentValueImpl = function (onPrimitiveValue, onMap, onArray, doc1, doc2) {
+  if (Array.isArray(doc1) && Array.isArray(doc2)) {
+    return onArray(doc1, doc2)
+  }
+
+  if (onPrimitiveValue(doc1, doc2)) {
+    return true
+  }
+
+  if (typeof doc1 === 'object' && typeof doc2 === 'object') {
+    return onMap(doc1, doc2)
+  }
+
+  return false
 }

@@ -11,8 +11,8 @@ module Web.Firestore.PrimitiveValue
 , pvText
 ) where
 
+import Prelude
 import Data.Function.Uncurried (Fn0, Fn1, Fn9, runFn0, runFn1, runFn9)
-
 import Web.Firestore.Blob (Blob)
 import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.GeographicalPoint (GeographicalPoint)
@@ -59,6 +59,21 @@ foreign import pvTextImpl :: Fn1 String PrimitiveValue
 
 pvText :: String -> PrimitiveValue
 pvText = runFn1 pvTextImpl
+
+foreign import eqPrimitiveValueImpl :: forall a. Fn9
+  (Boolean -> Boolean -> Boolean)
+  (Blob -> Blob -> Boolean)
+  (Timestamp -> Timestamp -> Boolean)
+  (GeographicalPoint -> GeographicalPoint -> Boolean)
+  (Number -> Number -> Boolean)
+  (DocumentReference a -> DocumentReference a -> Boolean)
+  (String -> String -> a)
+  PrimitiveValue
+  PrimitiveValue
+  Boolean
+
+instance eqPrimitiveValue :: Eq PrimitiveValue where
+  eq = runFn9 eqPrimitiveValueImpl eq eq eq eq eq eq eq
 
 foreign import evalPrimitiveValueImpl :: forall a b. Fn9
   (Boolean -> a)
