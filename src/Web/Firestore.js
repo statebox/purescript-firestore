@@ -111,15 +111,11 @@ exports.dataImpl = function (documentSnapshot, snapshotOptions) {
 exports.onSnapshotImpl = function (docRef, observer, options) {
   if (options === null) {
     return function () {
-      return function () {
-        return docRef.onSnapshot(observer)
-      }
+      return docRef.onSnapshot(observer)
     }
   }
 
   return function () {
-    return function () {
-      return docRef.onSnapshot(options, observer)
-    }
+    return docRef.onSnapshot(options, observer)
   }
 }

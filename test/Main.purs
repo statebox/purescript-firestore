@@ -16,9 +16,9 @@ import Test.Web.Firestore.TimestampSpec as Timestamp
 
 main :: Effect (Fiber Unit)
 main = launchAff $ runSpec [consoleReporter] do
-  Blob.suite
-  Options.suite
-  Path.suite
-  PrimitiveValue.suite
-  Timestamp.suite
+  -- Blob.suite
+  -- Options.suite
+  -- Path.suite
+  -- PrimitiveValue.suite
+  -- Timestamp.suite
   Firestore.suite

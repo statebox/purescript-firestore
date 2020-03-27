@@ -19,6 +19,7 @@
     , "profunctor"
     , "psci-support"
     , "quickcheck"
+    , "refs"
     , "spec"
     , "spec-quickcheck"
     , "strings"
