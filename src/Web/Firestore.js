@@ -111,11 +111,23 @@ exports.dataImpl = function (documentSnapshot, snapshotOptions) {
 exports.onSnapshotImpl = function (docRef, observer, options) {
   if (options === null) {
     return function () {
-      return docRef.onSnapshot(observer)
+      const unsubscribe = docRef.onSnapshot(function (snapshot) {
+        return observer.next(snapshot)()
+      })
+
+      return function () {
+        return unsubscribe
+      }
     }
   }
 
   return function () {
-    return docRef.onSnapshot(options, observer)
+    const unsubscribe = docRef.onSnapshot(options, function (snapshot) {
+      return observer.next(snapshot)()
+    })
+
+    return function () {
+      return unsubscribe
+    }
   }
 }

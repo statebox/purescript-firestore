@@ -3,7 +3,8 @@
 , name =
     "purescript-firestore"
 , dependencies =
-    [ "aff-promise"
+    [ "aff"
+    , "aff-promise"
     , "argonaut"
     , "arrays"
     , "dotenv"
