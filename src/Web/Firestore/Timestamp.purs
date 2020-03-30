@@ -52,8 +52,8 @@ instance arbitratyMicroseconds :: Arbitrary Microseconds where
 
 microseconds :: Int -> Microseconds
 microseconds i | i > 999999 = top
-              | i < 0      = bottom
-              | otherwise  = Microseconds i
+               | i < 0      = bottom
+               | otherwise  = Microseconds i
 
 foreign import data Timestamp :: Type
 
