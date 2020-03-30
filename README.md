@@ -4,7 +4,7 @@ A Purescript library to interact with [Google Cloud Firestore](https://firebase.
 
 The library is a work in progress and for the moment it exposes only a subset of the actual Firestore API.
 Basically at the moment you can read, write and delete a single document.
-Please take a look at the test in `test/Web/FirestoreSpec.purs` to see how to use the provided functions.
+Please take a look at the test in [FirestoreSpec.purs](test/Web/FirestoreSpec.purs) to see how to use the provided functions.
 
 ## build
 
@@ -33,7 +33,7 @@ Firestore does not offer a local version for testing, therefore we need to use a
 To configure the Firestore instance, copy the `.env.example` file into a `.env` file and add the parameters of your instance.
 
 Moreover, you should configure your instance so that the documents used in the tests are actually accessible.
-Something along this lines should work:
+Something along these lines should work:
 
 ```
 rules_version = '2';
@@ -70,7 +70,7 @@ You can build the documentation of the package using
 npm run docs
 ```
 
-and the browse to
+and then browse to
 
 ```
 generated-docs/html/index.html
