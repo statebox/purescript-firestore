@@ -426,3 +426,33 @@ suite = do
                   res <- liftEffect $ read docMaybeRef
                   res `shouldSatisfy` isJust
                   liftEffect $ unsubscribe unit
+
+    it "subscribes for document updates with error and complete callbacks" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test22")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  docMaybeRef <- liftEffect $ new Nothing
+                  let observer = partialObserver
+                        (\snapshot -> do
+                          newDoc <- liftEffect $ snapshotData snapshot Nothing
+                          write (Just newDoc) docMaybeRef)
+                        (Just $ fail <<< show)
+                        (Just $ const (fail "completion callback is not executed"))
+                      doc = document docRef
+                  unsubscribe <- liftEffect $
+                    onSnapshot docRef observer (Just $ SnapshotListenOptions {includeMetadataChanges: true})
+                  setPromise <- liftEffect $ set docRef doc Nothing
+                  toAff setPromise
+                  res <- liftEffect $ read docMaybeRef
+                  res `shouldSatisfy` isJust
+                  liftEffect $ unsubscribe unit
