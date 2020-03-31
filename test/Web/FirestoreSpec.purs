@@ -7,13 +7,14 @@ import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
+import Effect.Ref (new, read, write)
 import Foreign.Object (empty, fromFoldable)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
-import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, set, snapshotData)
+import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, onSnapshot, set, snapshotData)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (arrayDocument, mapArrayValue, mapDocument, primitiveArrayValue, primitiveDocument)
@@ -21,9 +22,11 @@ import Web.Firestore.Errors.InitializeError (evalInitializeError)
 import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
+import Web.Firestore.PartialObserver (partialObserver)
 import Web.Firestore.Path (pathFromString)
 import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 import Web.Firestore.SetOptions (mergeFieldsOption, mergeOption, stringMergeField, fieldPathMergeField)
+import Web.Firestore.SnapshotListenOptions (SnapshotListenOptions(..))
 import Web.Firestore.SnapshotOptions (ServerTimestamps(..), SnapshotOptions(..))
 import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
 
@@ -364,3 +367,92 @@ suite = do
                   result <- liftEffect $ snapshotData snapshot Nothing
 
                   result `shouldEqual` DocumentData empty
+
+    it "subscribes for document updates" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test20")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  docMaybeRef <- liftEffect $ new Nothing
+                  let observer = partialObserver
+                        (\snapshot -> do
+                          newDoc <- liftEffect $ snapshotData snapshot Nothing
+                          write (Just newDoc) docMaybeRef)
+                        Nothing
+                        Nothing
+                      doc = document docRef
+                  unsubscribe <- liftEffect $ onSnapshot docRef observer Nothing
+                  setPromise <- liftEffect $ set docRef doc Nothing
+                  toAff setPromise
+                  res <- liftEffect $ read docMaybeRef
+                  res `shouldSatisfy` isJust
+                  liftEffect $ unsubscribe unit
+
+    it "subscribes for document updates with metadata" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test21")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  docMaybeRef <- liftEffect $ new Nothing
+                  let observer = partialObserver
+                        (\snapshot -> do
+                          newDoc <- liftEffect $ snapshotData snapshot Nothing
+                          write (Just newDoc) docMaybeRef)
+                        Nothing
+                        Nothing
+                      doc = document docRef
+                  unsubscribe <- liftEffect $
+                    onSnapshot docRef observer (Just $ SnapshotListenOptions {includeMetadataChanges: true})
+                  setPromise <- liftEffect $ set docRef doc Nothing
+                  toAff setPromise
+                  res <- liftEffect $ read docMaybeRef
+                  res `shouldSatisfy` isJust
+                  liftEffect $ unsubscribe unit
+
+    it "subscribes for document updates with error and complete callbacks" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test22")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  docMaybeRef <- liftEffect $ new Nothing
+                  let observer = partialObserver
+                        (\snapshot -> do
+                          newDoc <- liftEffect $ snapshotData snapshot Nothing
+                          write (Just newDoc) docMaybeRef)
+                        (Just $ fail <<< show)
+                        (Just $ const (fail "completion callback is not executed"))
+                      doc = document docRef
+                  unsubscribe <- liftEffect $
+                    onSnapshot docRef observer (Just $ SnapshotListenOptions {includeMetadataChanges: true})
+                  setPromise <- liftEffect $ set docRef doc Nothing
+                  toAff setPromise
+                  res <- liftEffect $ read docMaybeRef
+                  res `shouldSatisfy` isJust
+                  liftEffect $ unsubscribe unit

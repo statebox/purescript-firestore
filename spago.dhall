@@ -3,7 +3,8 @@
 , name =
     "purescript-firestore"
 , dependencies =
-    [ "aff-promise"
+    [ "aff"
+    , "aff-promise"
     , "argonaut"
     , "arrays"
     , "dotenv"
@@ -13,12 +14,12 @@
     , "foreign-object"
     , "functions"
     , "maybe"
-    , "newtype"
     , "node-process"
     , "nullable"
     , "profunctor"
     , "psci-support"
     , "quickcheck"
+    , "refs"
     , "spec"
     , "spec-quickcheck"
     , "strings"

@@ -8,6 +8,7 @@ module Web.Firestore
 , firestore
 , get
 , initializeApp
+, onSnapshot
 , set
 , snapshotData
 ) where
@@ -24,13 +25,15 @@ import Effect (Effect)
 
 import Web.Firestore.DocumentData (DocumentData)
 import Web.Firestore.DocumentReference (DocumentReference)
-import Web.Firestore.Errors.FirebaseError (FirebaseError, fromFirebaseError, fromString)
 import Web.Firestore.Error.FirestoreError (FirestoreError)
+import Web.Firestore.Errors.FirebaseError (FirebaseError, fromFirebaseError, fromString)
 import Web.Firestore.Errors.InitializeError (InitializeError)
 import Web.Firestore.GetOptions (GetOptions)
 import Web.Firestore.Options (Options)
+import Web.Firestore.PartialObserver (PartialObserver)
 import Web.Firestore.Path (Path)
 import Web.Firestore.SetOptions (SetOptions)
+import Web.Firestore.SnapshotListenOptions (SnapshotListenOptions)
 import Web.Firestore.SnapshotOptions (SnapshotOptions)
 
 foreign import data App :: Type
@@ -103,3 +106,16 @@ foreign import dataImpl :: Fn2 (DocumentSnapshot DocumentData) (Nullable Json) (
 
 snapshotData :: DocumentSnapshot DocumentData -> Maybe SnapshotOptions -> Effect DocumentData
 snapshotData docSnapshot options = runFn2 dataImpl docSnapshot (toNullable $ encodeJson <$> options)
+
+foreign import onSnapshotImpl :: Fn3
+  (DocumentReference DocumentData)
+  (PartialObserver (DocumentSnapshot DocumentData))
+  (Nullable SnapshotListenOptions)
+  (Effect (Unit -> Effect Unit))
+
+onSnapshot
+  :: DocumentReference DocumentData
+  -> PartialObserver (DocumentSnapshot DocumentData)
+  -> Maybe SnapshotListenOptions
+  -> Effect (Unit -> Effect Unit)
+onSnapshot docRef observer options = runFn3 onSnapshotImpl docRef observer (toNullable options)
