@@ -14,7 +14,6 @@
     , "foreign-object"
     , "functions"
     , "maybe"
-    , "newtype"
     , "node-process"
     , "nullable"
     , "profunctor"
