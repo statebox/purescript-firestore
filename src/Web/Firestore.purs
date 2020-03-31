@@ -2,6 +2,7 @@ module Web.Firestore
 ( App
 , DocumentSnapshot
 , Firestore
+, collection
 , delete
 , deleteApp
 , doc
@@ -23,6 +24,7 @@ import Data.Nullable (Nullable, toNullable)
 import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
 
+import Web.Firestore.CollectionReference (CollectionReference)
 import Web.Firestore.DocumentData (DocumentData)
 import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.Error.FirestoreError (FirestoreError)
@@ -80,6 +82,8 @@ foreign import firestoreImpl :: Fn3
 firestore :: App -> Effect (Either FirestoreError Firestore)
 firestore app = (fromFirebaseError fromString +++ identity) <$> runFn3 firestoreImpl Left Right app
 
+-- SINGLE DOCUMENT
+
 foreign import docImpl :: Fn2 Firestore String (Effect (DocumentReference DocumentData))
 
 doc :: Firestore -> Path -> Effect (DocumentReference DocumentData)
@@ -119,3 +123,10 @@ onSnapshot
   -> Maybe SnapshotListenOptions
   -> Effect (Unit -> Effect Unit)
 onSnapshot docRef observer options = runFn3 onSnapshotImpl docRef observer (toNullable options)
+
+-- COLLECTIONS
+
+foreign import collectionImpl :: Fn2 Firestore String (Effect (CollectionReference DocumentData))
+
+collection :: Firestore -> Path -> Effect (CollectionReference DocumentData)
+collection fs path = runFn2 collectionImpl fs (show path)

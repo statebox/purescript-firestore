@@ -1,4 +1,4 @@
-module Test.Web.FirestoreSpec where
+module Test.Web.FirestoreDocumentSpec where
 
 import Prelude
 import Control.Promise (toAff)
@@ -32,7 +32,7 @@ import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
 
 suite :: Spec Unit
 suite = do
-  describe "Firestore" do
+  describe "Firestore document" do
     it "initializes correctly an app with a name" do
       testOptions <- buildTestOptions
       eitherApp <- liftEffect $ initializeApp testOptions (Just "firestore-test1")

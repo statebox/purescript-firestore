@@ -142,3 +142,9 @@ exports.onSnapshotImpl = function (docRef, observer, options) {
     }
   }
 }
+
+exports.collectionImpl = function (firestore, collectionPath) {
+  return function () {
+    return firestore.collection(collectionPath)
+  }
+}
