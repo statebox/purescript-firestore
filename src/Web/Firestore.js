@@ -111,9 +111,14 @@ exports.dataImpl = function (documentSnapshot, snapshotOptions) {
 exports.onSnapshotImpl = function (docRef, observer, options) {
   if (options === null) {
     return function () {
-      const unsubscribe = docRef.onSnapshot(function (snapshot) {
-        return observer.next(snapshot)()
-      })
+      const unsubscribe = docRef.onSnapshot(
+        function (snapshot) {
+          return observer.next(snapshot)()
+        }, observer.error === null ? undefined : function (error) {
+          return observer.error(error)()
+        }, observer.complete === null ? undefined : function () {
+          return observer.complete()()
+        })
 
       return function () {
         return unsubscribe
@@ -122,9 +127,15 @@ exports.onSnapshotImpl = function (docRef, observer, options) {
   }
 
   return function () {
-    const unsubscribe = docRef.onSnapshot(options, function (snapshot) {
-      return observer.next(snapshot)()
-    })
+    const unsubscribe = docRef.onSnapshot(
+      options,
+      function (snapshot) {
+        return observer.next(snapshot)()
+      }, observer.error === null ? undefined : function (error) {
+        return observer.error(error)()
+      }, observer.complete === null ? undefined : function () {
+        return observer.complete()()
+      })
 
     return function () {
       return unsubscribe
