@@ -75,3 +75,10 @@ and then browse to
 ```
 generated-docs/html/index.html
 ```
+
+## license
+
+Unless explicitly stated otherwise all files in this repository are licensed
+under the [Hippocratic License](https://firstdonoharm.dev/).
+
+Copyright © 2020 [Stichting Statebox](https://statebox.nl).
