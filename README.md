@@ -39,11 +39,7 @@ Something along these lines should work:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /collection/test/{document=**} {
-      allow read, write: if true;
-    }
-
-    match /collection/other-test/{document=**} {
+    match /collection/{document=**} {
       allow read, write: if true;
     }
   }
