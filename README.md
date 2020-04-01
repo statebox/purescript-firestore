@@ -4,7 +4,7 @@ A Purescript library to interact with [Google Cloud Firestore](https://firebase.
 
 The library is a work in progress and for the moment it exposes only a subset of the actual Firestore API.
 Basically at the moment you can read, write, delete and subscribe to the changes of a single document.
-Please take a look at the test in [FirestoreSpec.purs](test/Web/FirestoreSpec.purs) to see how to use the provided functions.
+Please take a look at the test in [FirestoreDocumentSpec.purs](test/Web/FirestoreDocumentSpec.purs) to see how to use the provided functions.
 
 ## build
 
