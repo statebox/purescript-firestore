@@ -23,6 +23,7 @@ module Web.Firestore
 , docCollection
 , firestore
 , get
+, getCollection
 , initializeApp
 , onSnapshot
 , set
@@ -51,6 +52,7 @@ import Web.Firestore.GetOptions (GetOptions)
 import Web.Firestore.Options (Options)
 import Web.Firestore.PartialObserver (PartialObserver)
 import Web.Firestore.DocumentPath (DocumentPath)
+import Web.Firestore.QuerySnapshot (QuerySnapshot)
 import Web.Firestore.SetOptions (SetOptions)
 import Web.Firestore.SnapshotListenOptions (SnapshotListenOptions)
 import Web.Firestore.SnapshotOptions (SnapshotOptions)
@@ -162,3 +164,11 @@ foreign import addImpl :: forall a. Fn2 (CollectionReference a) a (Effect (Promi
 
 add :: forall a. CollectionReference a -> a -> Effect (Promise (DocumentReference a))
 add = runFn2 addImpl
+
+foreign import getCollectionImpl :: forall a. Fn2
+  (CollectionReference a)
+  (Nullable Json)
+  (Effect (Promise (QuerySnapshot a)))
+
+getCollection :: forall a. CollectionReference a -> Maybe GetOptions -> Effect (Promise (QuerySnapshot a))
+getCollection collectionRef options = runFn2 getCollectionImpl collectionRef (toNullable $ encodeJson <$> options)

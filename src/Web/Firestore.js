@@ -179,3 +179,9 @@ exports.addImpl = function (collectionRef, doc) {
     return collectionRef.add(doc)
   }
 }
+
+exports.getCollectionImpl = function (collectionRef, options) {
+  return function () {
+    return collectionRef.get(options)
+  }
+}
