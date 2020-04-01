@@ -48,18 +48,19 @@ suite = do
         ts = timestamp (seconds 1584696645.0) (microseconds 123456)
         geoPoint = point (unsafePartial $ fromJust $ lat 45.666) (unsafePartial $ fromJust $ lon 12.25)
         bytes = blob "ꘚ見꿮嬲霃椮줵"
-        document = DocumentData (fromFoldable [ "text"      /\ (primitiveDocument (pvText              "some text"))
-                                              , "number"    /\ (primitiveDocument (pvNumber            273.15     ))
-                                              , "bool"      /\ (primitiveDocument (pvBoolean           true       ))
-                                              , "null"      /\ (primitiveDocument (pvNull                         ))
-                                              , "point"     /\ (primitiveDocument (pvGeographicalPoint geoPoint   ))
-                                              , "datetime"  /\ (primitiveDocument (pvDateTime          ts         ))
-                                              , "map"       /\ mapDoc
-                                              , "array"     /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
-                                                                              , arrayMapDoc
-                                                                              ])
-                                              , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
-                                              ])
+        document1 = DocumentData (fromFoldable [ "text"      /\ (primitiveDocument (pvText              "some text"))
+                                               , "number"    /\ (primitiveDocument (pvNumber            273.15     ))
+                                               , "bool"      /\ (primitiveDocument (pvBoolean           true       ))
+                                               , "null"      /\ (primitiveDocument (pvNull                         ))
+                                               , "point"     /\ (primitiveDocument (pvGeographicalPoint geoPoint   ))
+                                               ])
+        document2 = DocumentData (fromFoldable [ "datetime"  /\ (primitiveDocument (pvDateTime          ts         ))
+                                               , "map"       /\ mapDoc
+                                               , "array"     /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
+                                                                               , arrayMapDoc
+                                                                               ])
+                                               , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
+                                               ])
 
     it "adds documents to a collection" do
       testOptions <- buildTestOptions
@@ -75,6 +76,8 @@ suite = do
               case maybeCollectionRef of
                 Nothing            -> fail "invalid path"
                 Just collectionRef -> do
-                  addPromise <- liftEffect $ add collectionRef document
-                  _ <- toAff addPromise
+                  addPromise1 <- liftEffect $ add collectionRef document1
+                  _ <- toAff addPromise1
+                  addPromise2 <- liftEffect $ add collectionRef document2
+                  _ <- toAff addPromise2
                   pure unit
