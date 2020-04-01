@@ -15,6 +15,7 @@ module Web.Firestore
 ( App
 , DocumentSnapshot
 , Firestore
+, add
 , collection
 , delete
 , deleteApp
