@@ -8,7 +8,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldSatisfy)
 import Test.Spec.QuickCheck (quickCheck)
 
-import Web.Firestore.Path (path)
+import Web.Firestore.DocumentPath (path)
 
 suite :: Spec Unit
 suite = do

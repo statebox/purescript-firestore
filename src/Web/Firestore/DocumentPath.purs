@@ -1,4 +1,4 @@
-module Web.Firestore.Path (Path, path, pathFromString) where
+module Web.Firestore.DocumentPath (DocumentPath, path, pathFromString) where
 
 import Prelude
 import Control.Bind (bindFlipped)
@@ -8,15 +8,15 @@ import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 
 -- | A non-empty slash-separated path to a document
-newtype Path = Path (NonEmptyArray String)
+newtype DocumentPath = DocumentPath (NonEmptyArray String)
 
-instance showPath :: Show Path where
-  show (Path sections) = intercalate "/" sections
+instance showDocumentPath :: Show DocumentPath where
+  show (DocumentPath sections) = intercalate "/" sections
 
-path :: NonEmptyArray String -> Maybe Path
+path :: NonEmptyArray String -> Maybe DocumentPath
 path sections = if mod (length sections) 2 == 0
-  then Just $ Path sections
+  then Just $ DocumentPath sections
   else Nothing
 
-pathFromString :: String -> Maybe Path
+pathFromString :: String -> Maybe DocumentPath
 pathFromString = bindFlipped path <<< fromArray <<< split (Pattern "/")
