@@ -25,7 +25,7 @@ import Test.Web.Firestore.BlobSpec as Blob
 import Test.Web.Firestore.DocumentDataSpec as DocumentData
 import Test.Web.Firestore.DocumentValueSpec as DocumentValue
 import Test.Web.Firestore.OptionsSpec as Options
-import Test.Web.Firestore.PathSpec as Path
+import Test.Web.Firestore.DocumentPathSpec as DocumentPath
 import Test.Web.Firestore.PrimitiveValueSpec as PrimitiveValue
 import Test.Web.Firestore.TimestampSpec as Timestamp
 
@@ -35,7 +35,7 @@ main = launchAff $ runSpec [consoleReporter] do
   DocumentData.suite
   DocumentValue.suite
   Options.suite
-  Path.suite
+  DocumentPath.suite
   PrimitiveValue.suite
   Timestamp.suite
   FirestoreDocument.suite

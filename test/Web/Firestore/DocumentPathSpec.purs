@@ -11,7 +11,7 @@ You should have received a copy of the Hippocratic License along with
 this program. If not, see <https://firstdonoharm.dev/>.
 -}
 
-module Test.Web.Firestore.PathSpec where
+module Test.Web.Firestore.DocumentPathSpec where
 
 import Prelude
 import Data.Array.NonEmpty (fromArray)
@@ -25,7 +25,7 @@ import Web.Firestore.DocumentPath (path)
 
 suite :: Spec Unit
 suite = do
-  describe "Path" do
+  describe "DocumentPath" do
     it "is created correctly with an even number of sections" $ quickCheck
       \str1 str2 -> isJust (path =<< fromArray [str1, str2]) === true
 
