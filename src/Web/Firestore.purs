@@ -38,6 +38,7 @@ import Data.Nullable (Nullable, toNullable)
 import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
 
+import Web.Firestore.CollectionPath (CollectionPath)
 import Web.Firestore.CollectionReference (CollectionReference)
 import Web.Firestore.DocumentData (DocumentData)
 import Web.Firestore.DocumentReference (DocumentReference)
@@ -47,7 +48,7 @@ import Web.Firestore.Errors.InitializeError (InitializeError)
 import Web.Firestore.GetOptions (GetOptions)
 import Web.Firestore.Options (Options)
 import Web.Firestore.PartialObserver (PartialObserver)
-import Web.Firestore.Path (Path)
+import Web.Firestore.DocumentPath (DocumentPath)
 import Web.Firestore.SetOptions (SetOptions)
 import Web.Firestore.SnapshotListenOptions (SnapshotListenOptions)
 import Web.Firestore.SnapshotOptions (SnapshotOptions)
@@ -100,7 +101,7 @@ firestore app = (fromFirebaseError fromString +++ identity) <$> runFn3 firestore
 
 foreign import docImpl :: Fn2 Firestore String (Effect (DocumentReference DocumentData))
 
-doc :: Firestore -> Path -> Effect (DocumentReference DocumentData)
+doc :: Firestore -> DocumentPath -> Effect (DocumentReference DocumentData)
 doc fs path = runFn2 docImpl fs (show path)
 
 foreign import setImpl ::Fn3 (DocumentReference DocumentData) DocumentData (Nullable SetOptions) (Effect (Promise Unit))
@@ -147,5 +148,5 @@ update = runFn2 updateImpl
 
 foreign import collectionImpl :: Fn2 Firestore String (Effect (CollectionReference DocumentData))
 
-collection :: Firestore -> Path -> Effect (CollectionReference DocumentData)
+collection :: Firestore -> CollectionPath -> Effect (CollectionReference DocumentData)
 collection fs path = runFn2 collectionImpl fs (show path)

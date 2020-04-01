@@ -25,7 +25,7 @@ import Test.Spec.QuickCheck (quickCheck)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 import Web.Firestore (doc, firestore, initializeApp)
-import Web.Firestore.Path (pathFromString)
+import Web.Firestore.DocumentPath (pathFromString)
 import Web.Firestore.PrimitiveValue (evalPrimitiveValue, pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 
 suite :: Spec Unit

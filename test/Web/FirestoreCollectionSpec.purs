@@ -10,7 +10,7 @@ import Test.Spec.Assertions (fail, shouldSatisfy)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 import Web.Firestore (collection, firestore, initializeApp)
-import Web.Firestore.Path (pathFromString)
+import Web.Firestore.CollectionPath (pathFromString)
 
 suite :: Spec Unit
 suite = do
