@@ -22,6 +22,7 @@ import Test.Spec.Runner (runSpec)
 import Test.Web.FirestoreCollectionSpec as FirestoreCollection
 import Test.Web.FirestoreDocumentSpec as FirestoreDocument
 import Test.Web.Firestore.BlobSpec as Blob
+import Test.Web.Firestore.CollectionPathSpec as CollectionPath
 import Test.Web.Firestore.DocumentDataSpec as DocumentData
 import Test.Web.Firestore.DocumentValueSpec as DocumentValue
 import Test.Web.Firestore.OptionsSpec as Options
@@ -32,10 +33,11 @@ import Test.Web.Firestore.TimestampSpec as Timestamp
 main :: Effect (Fiber Unit)
 main = launchAff $ runSpec [consoleReporter] do
   Blob.suite
+  CollectionPath.suite
   DocumentData.suite
   DocumentValue.suite
-  Options.suite
   DocumentPath.suite
+  Options.suite
   PrimitiveValue.suite
   Timestamp.suite
   FirestoreDocument.suite
