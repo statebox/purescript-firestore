@@ -181,6 +181,8 @@ exports.addImpl = function (collectionRef, doc) {
 }
 
 exports.getCollectionImpl = function (collectionRef, options) {
+  options = options === null ? undefined : options
+
   return function () {
     return collectionRef.get(options)
   }
