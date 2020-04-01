@@ -167,3 +167,9 @@ exports.collectionImpl = function (firestore, collectionPath) {
     return firestore.collection(collectionPath)
   }
 }
+
+exports.addImpl = function (collectionRef, doc) {
+  return function () {
+    return collectionRef.add(doc)
+  }
+}

@@ -150,3 +150,8 @@ foreign import collectionImpl :: Fn2 Firestore String (Effect (CollectionReferen
 
 collection :: Firestore -> CollectionPath -> Effect (CollectionReference DocumentData)
 collection fs path = runFn2 collectionImpl fs (show path)
+
+foreign import addImpl :: forall a. Fn2 (CollectionReference a) a (Effect (Promise (DocumentReference a)))
+
+add :: forall a. CollectionReference a -> a -> Effect (Promise (DocumentReference a))
+add = runFn2 addImpl
