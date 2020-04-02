@@ -148,3 +148,21 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef (Just $ GetOptions Server)
                   querySnapshot <- toAff getPromise
                   pure unit
+
+    it "gets data from an empty collection" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test-5")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeCollectionRef <- liftEffect $ sequence $ collection firestoreInstance <$> (pathFromString "collection")
+              case maybeCollectionRef of
+                Nothing            -> fail "invalid path"
+                Just collectionRef -> do
+                  getPromise <- liftEffect $ getCollection collectionRef Nothing
+                  querySnapshot <- toAff getPromise
+                  pure unit
