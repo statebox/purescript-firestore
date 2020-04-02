@@ -27,4 +27,8 @@
     ]
 , packages =
     ./packages.dhall
+, license =
+    "Hippocratic 2.1"
+, repository =
+    "https://github.com/statebox/purescript-firestore"
 }
