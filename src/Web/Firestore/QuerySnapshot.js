@@ -7,3 +7,9 @@ exports.forEachImpl = function (snapshot, callback) {
     })
   }
 }
+
+exports.queryDocumentDataImpl = function (documentSnapshot, options) {
+  options = options === null ? undefined : options
+
+  return documentSnapshot.data()
+}

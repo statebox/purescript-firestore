@@ -11,8 +11,9 @@ import Foreign.Object (fromFoldable)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldSatisfy)
-
+import Test.Spec.Console (write)
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
+
 import Web.Firestore (add, collection, firestore, getCollection, initializeApp)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.CollectionPath (pathFromString)
@@ -22,6 +23,7 @@ import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
 import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvText)
+import Web.Firestore.QuerySnapshot (forEach, queryDocumentData)
 import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
 
 suite :: Spec Unit
