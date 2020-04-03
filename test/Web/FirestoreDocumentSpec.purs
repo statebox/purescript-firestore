@@ -49,75 +49,125 @@ suite = do
   describe "Firestore document" do
     it "initializes correctly an app with a name" do
       testOptions <- buildTestOptions
-      eitherApp <- liftEffect $ initializeApp testOptions (Just "firestore-test1")
-      eitherApp `shouldSatisfy` isRight
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      eitherErrorApp `shouldSatisfy` isRight
+      case eitherErrorApp of
+        Left error -> pure unit
+        Right app  -> do
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "initializes correctly an app without a name" do
       testOptions <- buildTestOptions
-      eitherApp <- liftEffect $ initializeApp testOptions Nothing
-      eitherApp `shouldSatisfy` isRight
+      eitherErrorApp <- liftEffect $ initializeApp testOptions Nothing
+      eitherErrorApp `shouldSatisfy` isRight
+      case eitherErrorApp of
+        Left error -> pure unit
+        Right app  -> do
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "fails to initialize an app with an empty name" do
       testOptions <- buildTestOptions
-      eitherApp <- liftEffect $ initializeApp testOptions (Just "")
-      eitherApp # either
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "")
+      eitherErrorApp # either
         (evalInitializeError
           (const $ fail "Should be a BadAppName InitializeError")
           (_ `shouldSatisfy` (const true))
           (const $ fail "Should be a BadAppName InitializeError"))
-        (const $ fail "should not initialize an app with an empty name")
+        (\app  -> do
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
+          fail "should not initialize an app with an empty name")
 
     it "fails app initialization if app is initialized twice" do
       testOptions <- buildTestOptions
-      _ <- liftEffect $ initializeApp testOptions (Just "firestore-test2")
-      eitherApp <- liftEffect $ initializeApp testOptions (Just "firestore-test2")
-      eitherApp # either
+      eitherErrorApp1 <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      eitherErrorApp2 <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      eitherErrorApp2 # either
         (evalInitializeError
-          (_ `shouldSatisfy` (const true))
-          (const $ fail "Should be a DuplicateApp InitializeError")
-          (const $ fail "Should be a DuplicateApp InitializeError"))
-        (const $ fail "should not initialize the same app twice")
+          (\error -> do
+            either
+              (const $ pure unit)
+              (\app1 -> do
+                deletePromise <- liftEffect $ deleteApp app1
+                toAff deletePromise)
+              eitherErrorApp1
+            error `shouldSatisfy` (const true))
+          (\error -> do
+            either
+              (const $ pure unit)
+              (\app1 -> do
+                deletePromise <- liftEffect $ deleteApp app1
+                toAff deletePromise)
+              eitherErrorApp1
+            fail "Should be a DuplicateApp InitializeError")
+          (\error -> do
+            either
+              (const $ pure unit)
+              (\app1 -> do
+                deletePromise <- liftEffect $ deleteApp app1
+                toAff deletePromise)
+              eitherErrorApp1
+            fail "Should be a DuplicateApp InitializeError"))
+        (\app2 -> do
+          deletePromise <- liftEffect $ deleteApp app2
+          toAff deletePromise
+          fail "should not initialize the same app twice")
 
     it "detects that one app is equal to itself" do
       testOptions <- buildTestOptions
-      eitherApp <- liftEffect $ initializeApp testOptions (Just "firestore-test3")
-      eitherApp # either
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      eitherErrorApp # either
         (const $ fail "app initialization should have happened correctly")
-        (\app -> app `shouldEqual` app)
+        (\app -> do
+          app `shouldEqual` app
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise)
 
     it "detects that two apps are different" do
       testOptions <- buildTestOptions
-      eitherApp1 <- liftEffect $ initializeApp testOptions (Just "firestore-test4")
-      eitherApp2 <- liftEffect $ initializeApp testOptions (Just "firestore-test5")
-      eitherApp1 # either
+      eitherErrorApp1 <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      eitherErrorApp2 <- liftEffect $ initializeApp testOptions (Just "firestore-test1")
+      eitherErrorApp1 # either
         (const $ fail "app initialization should have happened correctly")
-        (\app1 -> eitherApp2 # either
-          (const $ fail "app initialization should have happened correctly")
-          (\app2 -> app1 `shouldNotEqual` app2))
+        (\app1 -> eitherErrorApp2 # either
+          (const $ do
+            deletePromise1 <- liftEffect $ deleteApp app1
+            toAff deletePromise1
+            fail "app initialization should have happened correctly")
+          (\app2 -> do
+            app1 `shouldNotEqual` app2
+            deletePromise1 <- liftEffect $ deleteApp app1
+            toAff deletePromise1
+            deletePromise2 <- liftEffect $ deleteApp app2
+            toAff deletePromise2))
 
     it "retrieves a firestore instance" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test6")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
           firestoreInstance <- liftEffect $ firestore app
           firestoreInstance `shouldSatisfy` isRight
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "does not retrieve a firestore instance if the app gets deleted" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test7")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
           deletePromise <- liftEffect $ deleteApp app
-          _ <- toAff $ deletePromise
+          toAff deletePromise
           firestoreInstance <- liftEffect $ firestore app
           firestoreInstance `shouldSatisfy` isLeft
 
     it "does create a document reference" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test8")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -127,6 +177,8 @@ suite = do
             Right firestoreInstance -> do
               maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
               maybeDocRef `shouldSatisfy` isJust
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     let mapDoc = mapDocument (fromFoldable [ "mapText"    /\ (primitiveDocument (pvText   "some other text"))
                                            , "mapInteger" /\ (primitiveDocument (pvNumber 42.0             ))
@@ -153,7 +205,7 @@ suite = do
 
     it "sets data correctly with no option" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test9")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -168,10 +220,12 @@ suite = do
                   let doc = document docRef
                   setPromise <- liftEffect $ set docRef doc Nothing
                   toAff setPromise
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "sets data correctly with merge option" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test10")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -186,10 +240,12 @@ suite = do
                   let doc = document docRef
                   setPromise <- liftEffect $ set docRef doc (Just $ mergeOption true)
                   toAff setPromise
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "sets data correctly with mergeFields option" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test11")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -206,10 +262,12 @@ suite = do
                                                                                       , fieldPathMergeField ["number"]
                                                                                       ])
                   toAff setPromise
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets existing data correctly with default options" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test12")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -227,10 +285,12 @@ suite = do
                   toAff setPromise
                   snapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets existing data correctly with cache options" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test13")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -248,10 +308,12 @@ suite = do
                   toAff setPromise
                   snapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets existing data correctly with server options" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test14")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -269,10 +331,12 @@ suite = do
                   toAff setPromise
                   snapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets data which was not set before" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test15")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -287,10 +351,12 @@ suite = do
                   getPromise <- liftEffect $ get docRef (Just $ GetOptions Server)
                   snapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "sets and gets data correctly" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test16")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -310,10 +376,12 @@ suite = do
                   result <- liftEffect $ snapshotData snapshot Nothing
 
                   result `shouldEqual` doc
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "sets and gets data correctly with estimate timestamp" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test17")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -333,10 +401,12 @@ suite = do
                   result <- liftEffect $ snapshotData snapshot (Just $ SnapshotOptions Estimate)
 
                   result `shouldEqual` doc
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "sets and gets data correctly with previous timestamp" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test18")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -356,10 +426,12 @@ suite = do
                   result <- liftEffect $ snapshotData snapshot (Just $ SnapshotOptions Previous)
 
                   result `shouldEqual` doc
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "deletes correctly document data" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test19")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -381,10 +453,12 @@ suite = do
                   result <- liftEffect $ snapshotData snapshot Nothing
 
                   result `shouldEqual` DocumentData empty
+          deleteAppPromise <- liftEffect $ deleteApp app
+          toAff deleteAppPromise
 
     it "subscribes for document updates" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test20")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -410,10 +484,12 @@ suite = do
                   res <- liftEffect $ read docMaybeRef
                   res `shouldSatisfy` isJust
                   liftEffect $ unsubscribe unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "subscribes for document updates with metadata" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test21")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -440,10 +516,12 @@ suite = do
                   res <- liftEffect $ read docMaybeRef
                   res `shouldSatisfy` isJust
                   liftEffect $ unsubscribe unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "subscribes for document updates with error and complete callbacks" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test22")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -470,10 +548,12 @@ suite = do
                   res <- liftEffect $ read docMaybeRef
                   res `shouldSatisfy` isJust
                   liftEffect $ unsubscribe unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "updates a document" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test23")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -488,10 +568,12 @@ suite = do
                   let doc = document docRef
                   updatePromise <- liftEffect $ update docRef doc
                   toAff updatePromise
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "updates a document with new data" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test24")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -527,10 +609,12 @@ suite = do
                                               , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
                                               ])
                   result `shouldEqual` newDoc
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "retrieves a collection starting from a document" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test25")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -544,3 +628,5 @@ suite = do
                 Just docRef -> do
                   maybeCollectionRef <- liftEffect $ sequence $ docCollection docRef <$> Collection.pathFromString "subcollection"
                   maybeCollectionRef `shouldSatisfy` isJust
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise

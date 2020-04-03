@@ -11,10 +11,9 @@ import Foreign.Object (fromFoldable)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldSatisfy)
-import Test.Spec.Console (write)
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 
-import Web.Firestore (add, collection, firestore, getCollection, initializeApp)
+import Web.Firestore (add, collection, deleteApp, firestore, getCollection, initializeApp)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.CollectionPath (pathFromString)
 import Web.Firestore.DocumentData (DocumentData(..))
@@ -23,7 +22,6 @@ import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
 import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvText)
-import Web.Firestore.QuerySnapshot (forEach, queryDocumentData)
 import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
 
 suite :: Spec Unit
@@ -31,7 +29,7 @@ suite = do
   describe "Firestore collection" do
     it "does create a collection reference" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -41,6 +39,8 @@ suite = do
             Right firestoreInstance -> do
               maybeCollectionRef <- liftEffect $ sequence $ collection firestoreInstance <$> (pathFromString "collection")
               maybeCollectionRef `shouldSatisfy` isJust
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     let mapDoc = mapDocument (fromFoldable [ "mapText"    /\ (primitiveDocument (pvText   "some other text"))
                                            , "mapInteger" /\ (primitiveDocument (pvNumber 42.0             ))
@@ -67,7 +67,7 @@ suite = do
 
     it "adds documents to a collection" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test-1")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -84,10 +84,12 @@ suite = do
                   addPromise2 <- liftEffect $ add collectionRef document2
                   _ <- toAff addPromise2
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets data from a collection" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test-2")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -106,10 +108,12 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef Nothing
                   querySnapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets data from a collection with cache options" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test-3")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -128,10 +132,12 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef (Just $ GetOptions Cache)
                   querySnapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets data from a collection with server options" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test-4")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -150,10 +156,12 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef (Just $ GetOptions Server)
                   querySnapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
 
     it "gets data from an empty collection" do
       testOptions <- buildTestOptions
-      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-collection-test-5")
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
       case eitherErrorApp of
         Left error -> fail $ show error
         Right app  -> do
@@ -168,3 +176,5 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef Nothing
                   querySnapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
