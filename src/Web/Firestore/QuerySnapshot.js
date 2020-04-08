@@ -13,3 +13,7 @@ exports.queryDocumentDataImpl = function (documentSnapshot, options) {
 
   return documentSnapshot.data()
 }
+
+exports.queryDocumentReferenceImpl = function (documentSnapshot) {
+  return documentSnapshot.ref
+}

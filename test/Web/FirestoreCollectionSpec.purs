@@ -194,8 +194,12 @@ suite = do
               case maybeCollectionRef of
                 Nothing            -> fail "invalid path"
                 Just collectionRef -> do
+                  addPromise1 <- liftEffect $ add collectionRef document1
+                  _ <- toAff addPromise1
+                  addPromise2 <- liftEffect $ add collectionRef document2
+                  _ <- toAff addPromise2
                   getPromise <- liftEffect $ getCollection collectionRef Nothing
                   querySnapshot <- toAff getPromise
-                  liftEffect $ forEach querySnapshot (const $ pure unit)
+                  forEach querySnapshot (const $ pure unit)
           deletePromise <- liftEffect $ deleteApp app
           toAff deletePromise
