@@ -13,7 +13,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldSatisfy)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
-import Web.Firestore (add, collection, deleteApp, firestore, getCollection, initializeApp)
+import Web.Firestore (add, clearCollection, collection, deleteApp, firestore, getCollection, initializeApp)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.CollectionPath (pathFromString)
 import Web.Firestore.DocumentData (DocumentData(..))
@@ -201,5 +201,30 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef Nothing
                   querySnapshot <- toAff getPromise
                   forEach querySnapshot (const $ pure unit)
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
+
+    it "clears a collection" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeCollectionRef <- liftEffect $ sequence $ collection firestoreInstance <$> (pathFromString "collection")
+              case maybeCollectionRef of
+                Nothing            -> fail "invalid path"
+                Just collectionRef -> do
+                  addPromise1 <- liftEffect $ add collectionRef document1
+                  _ <- toAff addPromise1
+                  addPromise2 <- liftEffect $ add collectionRef document2
+                  _ <- toAff addPromise2
+                  clearCollection collectionRef
+                  getPromise <- liftEffect $ getCollection collectionRef Nothing
+                  querySnapshot <- toAff getPromise
+                  forEach querySnapshot (const $ fail "no document should be present now!")
           deletePromise <- liftEffect $ deleteApp app
           toAff deletePromise
