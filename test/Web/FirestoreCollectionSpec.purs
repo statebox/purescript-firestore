@@ -11,8 +11,8 @@ import Foreign.Object (fromFoldable)
 import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldSatisfy)
-import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 
+import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 import Web.Firestore (add, collection, deleteApp, firestore, getCollection, initializeApp)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.CollectionPath (pathFromString)
@@ -22,6 +22,7 @@ import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
 import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvText)
+import Web.Firestore.QuerySnapshot (forEach)
 import Web.Firestore.Timestamp (microseconds, seconds, timestamp)
 
 suite :: Spec Unit
@@ -176,5 +177,25 @@ suite = do
                   getPromise <- liftEffect $ getCollection collectionRef Nothing
                   querySnapshot <- toAff getPromise
                   pure unit
+          deletePromise <- liftEffect $ deleteApp app
+          toAff deletePromise
+
+    it "cycles through the documents of a collection" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeCollectionRef <- liftEffect $ sequence $ collection firestoreInstance <$> (pathFromString "collection")
+              case maybeCollectionRef of
+                Nothing            -> fail "invalid path"
+                Just collectionRef -> do
+                  getPromise <- liftEffect $ getCollection collectionRef Nothing
+                  querySnapshot <- toAff getPromise
+                  liftEffect $ forEach querySnapshot (const $ pure unit)
           deletePromise <- liftEffect $ deleteApp app
           toAff deletePromise
