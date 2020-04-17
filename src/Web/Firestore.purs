@@ -27,6 +27,7 @@ module Web.Firestore
 ) where
 
 import Prelude
+
 import Control.Promise (Promise)
 import Data.Argonaut (Json, encodeJson)
 import Data.Either (Either(..))
@@ -35,7 +36,6 @@ import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toNullable)
 import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
-
 import Web.Firestore.DocumentData (DocumentData)
 import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.Error.FirestoreError (FirestoreError)
@@ -132,3 +132,8 @@ onSnapshot
   -> Maybe SnapshotListenOptions
   -> Effect (Unit -> Effect Unit)
 onSnapshot docRef observer options = runFn3 onSnapshotImpl docRef observer (toNullable options)
+
+foreign import updateImpl :: forall a. Fn2 (DocumentReference a) DocumentData (Effect (Promise Unit))
+
+update :: forall a. DocumentReference a -> DocumentData -> Effect (Promise Unit)
+update = runFn2 updateImpl
