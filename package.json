@@ -20,6 +20,6 @@
   },
   "dependencies": {
     "decimal.js": "^10.2.0",
-    "firebase": "^7.9.1"
+    "firebase": "^7.14.1"
   }
 }

@@ -26,5 +26,5 @@ exports.eqImpl = function (blob1, blob2) {
 }
 
 exports.showImpl = function (blob) {
-  return (Buffer.from(blob._binaryString, 'binary')).toString('utf16le')
+  return (Buffer.from(blob._byteString.binaryString, 'binary')).toString('utf16le')
 }
