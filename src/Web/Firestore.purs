@@ -24,6 +24,7 @@ module Web.Firestore
 , onSnapshot
 , set
 , snapshotData
+, update
 ) where
 
 import Prelude

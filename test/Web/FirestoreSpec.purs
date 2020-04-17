@@ -27,7 +27,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
-import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, onSnapshot, set, snapshotData)
+import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, onSnapshot, set, snapshotData, update)
 import Web.Firestore.Blob (blob)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (arrayDocument, mapArrayValue, mapDocument, primitiveArrayValue, primitiveDocument)
@@ -469,3 +469,60 @@ suite = do
                   res <- liftEffect $ read docMaybeRef
                   res `shouldSatisfy` isJust
                   liftEffect $ unsubscribe unit
+
+    it "updates a document" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test23")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  let doc = document docRef
+                  updatePromise <- liftEffect $ update docRef doc
+                  toAff updatePromise
+
+    it "updates a document with new data" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test24")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  let doc = document docRef
+                  setPromise <- liftEffect $ set docRef doc Nothing
+                  toAff setPromise
+                  let updateData = DocumentData (fromFoldable [ "text" /\ (primitiveDocument (pvText "some other text"))])
+                  updatePromise <- liftEffect $ update docRef updateData
+                  toAff updatePromise
+                  getPromise <- liftEffect $ get docRef Nothing
+                  snapshot <- toAff getPromise
+                  result <- liftEffect $ snapshotData snapshot Nothing
+                  let newDoc = DocumentData
+                                (fromFoldable [ "text"      /\ (primitiveDocument (pvText              "some other text"))
+                                              , "number"    /\ (primitiveDocument (pvNumber            273.15     ))
+                                              , "bool"      /\ (primitiveDocument (pvBoolean           true       ))
+                                              , "null"      /\ (primitiveDocument (pvNull                         ))
+                                              , "point"     /\ (primitiveDocument (pvGeographicalPoint geoPoint   ))
+                                              , "datetime"  /\ (primitiveDocument (pvDateTime          ts         ))
+                                              , "map"       /\ mapDoc
+                                              , "array"     /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
+                                                                              , arrayMapDoc
+                                                                              ])
+                                              , "reference" /\ (primitiveDocument (pvReference         docRef        ))
+                                              , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
+                                              ])
+                  result `shouldEqual` newDoc
