@@ -111,3 +111,6 @@ evalPrimitiveValue :: forall a b.
   (String -> a) ->
   PrimitiveValue -> a
 evalPrimitiveValue = runFn9 evalPrimitiveValueImpl
+
+instance showPrimitiveValue :: Show PrimitiveValue where
+  show = evalPrimitiveValue show show show show "null" show show show
