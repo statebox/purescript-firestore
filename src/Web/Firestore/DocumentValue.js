@@ -58,15 +58,15 @@ exports.showDocumentValueImpl = function (doc) {
 
 exports.eqDocumentValueImpl = function (onPrimitiveValue, onMap, onArray, doc1, doc2) {
   if (Array.isArray(doc1) && Array.isArray(doc2)) {
-    return onArray(doc1, doc2)
+    return onArray(doc1)(doc2)
   }
 
-  if (onPrimitiveValue(doc1, doc2)) {
+  if (onPrimitiveValue(doc1)(doc2)) {
     return true
   }
 
   if (typeof doc1 === 'object' && typeof doc2 === 'object') {
-    return onMap(doc1, doc2)
+    return onMap(doc1)(doc2)
   }
 
   return false
