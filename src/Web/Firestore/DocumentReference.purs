@@ -25,5 +25,5 @@ instance eqDocumentReference :: Eq (DocumentReference a) where
 
 foreign import showImpl :: forall a. Fn1 (DocumentReference a) String
 
-instance showDocumentReference :: Show a => Show (DocumentReference a) where
+instance showDocumentReference :: Show (DocumentReference a) where
   show = runFn1 showImpl

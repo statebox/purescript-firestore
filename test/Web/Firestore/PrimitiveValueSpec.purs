@@ -20,7 +20,7 @@ import Data.Traversable (sequence)
 import Effect.Class (liftEffect)
 import Test.QuickCheck ((===))
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (fail, shouldEqual)
+import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual)
 import Test.Spec.QuickCheck (quickCheck)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
@@ -146,3 +146,6 @@ suite = do
         Just
         (pvText string)
         === Just string
+
+    it "recognizes two text values as different" do
+      pvText "a string" `shouldNotEqual` pvText "another string"

@@ -59,19 +59,19 @@ exports.eqPrimitiveValueImpl = function
   , value2
   ) {
     if (typeof value1 === 'boolean' && typeof value2 === 'boolean') {
-      return onBool(value1, value2)
+      return onBool(value1)(value2)
     }
 
     if (value1 instanceof firebase.firestore.Blob && value2 instanceof firebase.firestore.Blob) {
-      return onBytes(value1, value2)
+      return onBytes(value1)(value2)
     }
 
     if (value1 instanceof firebase.firestore.Timestamp && value2 instanceof firebase.firestore.Timestamp) {
-      return onDateTime(value1, value2)
+      return onDateTime(value1)(value2)
     }
 
     if (value1 instanceof firebase.firestore.GeoPoint && value1 instanceof firebase.firestore.GeoPoint) {
-      return onGeographicalPoint(value1, value2)
+      return onGeographicalPoint(value1)(value2)
     }
 
     if (value1 === null && value2 === null) {
@@ -79,15 +79,15 @@ exports.eqPrimitiveValueImpl = function
     }
 
     if (typeof value1 === 'number' && typeof value2 === 'number') {
-      return onNumber(value1, value2)
+      return onNumber(value1)(value2)
     }
 
     if (value1 instanceof firebase.firestore.DocumentReference && value2 instanceof firebase.firestore.DocumentReference) {
-      return onReference(value1, value2)
+      return onReference(value1)(value2)
     }
 
     if (typeof value1 === 'string' && typeof value2 === 'string') {
-      return onText(value1, value2)
+      return onText(value1)(value2)
     }
 
     return false
