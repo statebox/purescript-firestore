@@ -155,3 +155,9 @@ exports.onSnapshotImpl = function (docRef, observer, options) {
     }
   }
 }
+
+exports.updateImpl = function (docRef, data) {
+  return function () {
+    return docRef.update(data)
+  }
+}

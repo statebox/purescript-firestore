@@ -24,6 +24,7 @@ module Web.Firestore
 , onSnapshot
 , set
 , snapshotData
+, update
 ) where
 
 import Prelude
@@ -132,3 +133,8 @@ onSnapshot
   -> Maybe SnapshotListenOptions
   -> Effect (Unit -> Effect Unit)
 onSnapshot docRef observer options = runFn3 onSnapshotImpl docRef observer (toNullable options)
+
+foreign import updateImpl :: forall a. Fn2 (DocumentReference a) DocumentData (Effect (Promise Unit))
+
+update :: forall a. DocumentReference a -> DocumentData -> Effect (Promise Unit)
+update = runFn2 updateImpl
