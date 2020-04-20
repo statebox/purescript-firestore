@@ -14,7 +14,6 @@ this program. If not, see <https://firstdonoharm.dev/>.
 module Test.Web.Firestore.PrimitiveValueSpec where
 
 import Prelude
-
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
@@ -23,6 +22,7 @@ import Test.QuickCheck ((===))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual)
 import Test.Spec.QuickCheck (quickCheck)
+
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 import Web.Firestore (doc, firestore, initializeApp)
 import Web.Firestore.Path (pathFromString)
