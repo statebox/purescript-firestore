@@ -522,7 +522,7 @@ suite = do
                                               , "array"     /\ (arrayDocument [ primitiveArrayValue (pvNumber 273.15)
                                                                               , arrayMapDoc
                                                                               ])
-                                              , "reference" /\ (primitiveDocument (pvReference         docRef        ))
+                                              , "reference" /\ (primitiveDocument (pvReference         docRef     ))
                                               , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
                                               ])
                   result `shouldEqual` newDoc
