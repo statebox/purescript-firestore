@@ -16,6 +16,7 @@ module Web.Firestore
 , DocumentSnapshot
 , Firestore
 , add
+, clearCollection
 , collection
 , delete
 , deleteApp
@@ -23,6 +24,7 @@ module Web.Firestore
 , docCollection
 , firestore
 , get
+, getCollection
 , initializeApp
 , onSnapshot
 , set
@@ -31,18 +33,21 @@ module Web.Firestore
 ) where
 
 import Prelude
-import Control.Promise (Promise)
+import Control.Promise (Promise, toAff)
 import Data.Argonaut (Json, encodeJson)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn1, Fn2, Fn3, Fn4, runFn1, runFn2, runFn3, runFn4)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, toNullable)
 import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
+import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
 
 import Web.Firestore.CollectionPath (CollectionPath)
 import Web.Firestore.CollectionReference (CollectionReference)
 import Web.Firestore.DocumentData (DocumentData)
+import Web.Firestore.DocumentPath (DocumentPath)
 import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.Error.FirestoreError (FirestoreError)
 import Web.Firestore.Errors.FirebaseError (FirebaseError, fromFirebaseError, fromString)
@@ -50,7 +55,7 @@ import Web.Firestore.Errors.InitializeError (InitializeError)
 import Web.Firestore.GetOptions (GetOptions)
 import Web.Firestore.Options (Options)
 import Web.Firestore.PartialObserver (PartialObserver)
-import Web.Firestore.DocumentPath (DocumentPath)
+import Web.Firestore.QuerySnapshot (QuerySnapshot, forEach, queryDocumentReference)
 import Web.Firestore.SetOptions (SetOptions)
 import Web.Firestore.SnapshotListenOptions (SnapshotListenOptions)
 import Web.Firestore.SnapshotOptions (SnapshotOptions)
@@ -162,3 +167,23 @@ foreign import addImpl :: forall a. Fn2 (CollectionReference a) a (Effect (Promi
 
 add :: forall a. CollectionReference a -> a -> Effect (Promise (DocumentReference a))
 add = runFn2 addImpl
+
+foreign import getCollectionImpl :: forall a. Fn2
+  (CollectionReference a)
+  (Nullable Json)
+  (Effect (Promise (QuerySnapshot a)))
+
+getCollection :: forall a. CollectionReference a -> Maybe GetOptions -> Effect (Promise (QuerySnapshot a))
+getCollection collectionRef options = runFn2 getCollectionImpl collectionRef (toNullable $ encodeJson <$> options)
+
+-- | deleting data from a web client is not recommended. You should avoid to use this function
+-- |
+-- | see https://firebase.google.com/docs/firestore/manage-data/delete-data for more details
+clearCollection :: forall a. CollectionReference a -> Aff Unit
+clearCollection collectionRef = do
+  getPromise <- liftEffect $ getCollection collectionRef Nothing
+  querySnapshot <- toAff getPromise
+  forEach querySnapshot (\queryDocumentSnapshot -> do
+    let queryDocRef = queryDocumentReference queryDocumentSnapshot
+    deletePromise <- liftEffect $ delete queryDocRef
+    toAff deletePromise)

@@ -14,24 +14,25 @@ this program. If not, see <https://firstdonoharm.dev/>.
 module Test.Main where
 
 import Prelude
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Fiber, launchAff)
 import Test.Spec.Reporter.Console (consoleReporter)
-import Test.Spec.Runner (runSpec)
 
-import Test.Web.FirestoreCollectionSpec as FirestoreCollection
-import Test.Web.FirestoreDocumentSpec as FirestoreDocument
+import Test.Spec.Runner (defaultConfig, runSpec')
 import Test.Web.Firestore.BlobSpec as Blob
 import Test.Web.Firestore.CollectionPathSpec as CollectionPath
 import Test.Web.Firestore.DocumentDataSpec as DocumentData
+import Test.Web.Firestore.DocumentPathSpec as DocumentPath
 import Test.Web.Firestore.DocumentValueSpec as DocumentValue
 import Test.Web.Firestore.OptionsSpec as Options
-import Test.Web.Firestore.DocumentPathSpec as DocumentPath
 import Test.Web.Firestore.PrimitiveValueSpec as PrimitiveValue
 import Test.Web.Firestore.TimestampSpec as Timestamp
+import Test.Web.FirestoreCollectionSpec as FirestoreCollection
+import Test.Web.FirestoreDocumentSpec as FirestoreDocument
 
 main :: Effect (Fiber Unit)
-main = launchAff $ runSpec [consoleReporter] do
+main = launchAff $ runSpec' (defaultConfig {timeout = Nothing}) [consoleReporter] do
   Blob.suite
   CollectionPath.suite
   DocumentData.suite
