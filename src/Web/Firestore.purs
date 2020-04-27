@@ -145,6 +145,11 @@ foreign import updateImpl :: forall a. Fn2 (DocumentReference a) DocumentData (E
 update :: forall a. DocumentReference a -> DocumentData -> Effect (Promise Unit)
 update = runFn2 updateImpl
 
+foreign import docCollectionImpl :: forall a. Fn2 (DocumentReference a) String (Effect (CollectionReference DocumentData))
+
+docCollection :: forall a. DocumentReference a -> CollectionPath -> Effect (CollectionReference DocumentData)
+docCollection docRef path = runFn2 docCollectionImpl docRef (show path)
+
 -- COLLECTIONS
 
 foreign import collectionImpl :: Fn2 Firestore String (Effect (CollectionReference DocumentData))
