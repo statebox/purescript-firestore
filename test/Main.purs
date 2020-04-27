@@ -27,6 +27,7 @@ import Test.Web.Firestore.PathSpec as Path
 import Test.Web.Firestore.PrimitiveValueSpec as PrimitiveValue
 import Test.Web.Firestore.TimestampSpec as Timestamp
 import Test.Web.FirestoreSpec as Firestore
+import Test.Web.WriteBatchSpec as WriteBatch
 
 main :: Effect (Fiber Unit)
 main = launchAff $ runSpec [consoleReporter] do
@@ -38,3 +39,4 @@ main = launchAff $ runSpec [consoleReporter] do
   PrimitiveValue.suite
   Timestamp.suite
   Firestore.suite
+  WriteBatch.suite
