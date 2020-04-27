@@ -20,6 +20,7 @@ module Web.Firestore
 , delete
 , deleteApp
 , doc
+, docCollection
 , firestore
 , get
 , initializeApp
