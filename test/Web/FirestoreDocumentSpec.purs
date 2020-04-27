@@ -27,16 +27,17 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail, shouldEqual, shouldNotEqual, shouldSatisfy)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
-import Web.Firestore (delete, deleteApp, doc, firestore, get, initializeApp, onSnapshot, set, snapshotData, update)
+import Web.Firestore (delete, deleteApp, doc, docCollection, firestore, get, initializeApp, onSnapshot, set, snapshotData, update)
 import Web.Firestore.Blob (blob)
+import Web.Firestore.CollectionPath (pathFromString) as Collection
 import Web.Firestore.DocumentData (DocumentData(..))
+import Web.Firestore.DocumentPath (pathFromString)
 import Web.Firestore.DocumentValue (arrayDocument, mapArrayValue, mapDocument, primitiveArrayValue, primitiveDocument)
 import Web.Firestore.Errors.InitializeError (evalInitializeError)
 import Web.Firestore.GeographicalPoint (point)
 import Web.Firestore.GetOptions (GetOptions(..), SourceOption(..))
 import Web.Firestore.LatLon (lat, lon)
 import Web.Firestore.PartialObserver (partialObserver)
-import Web.Firestore.DocumentPath (pathFromString)
 import Web.Firestore.PrimitiveValue (pvBytes, pvBoolean, pvDateTime, pvGeographicalPoint, pvNull, pvNumber, pvReference, pvText)
 import Web.Firestore.SetOptions (mergeFieldsOption, mergeOption, stringMergeField, fieldPathMergeField)
 import Web.Firestore.SnapshotListenOptions (SnapshotListenOptions(..))
@@ -526,3 +527,20 @@ suite = do
                                               , "bytes"     /\ (primitiveDocument (pvBytes             bytes      ))
                                               ])
                   result `shouldEqual` newDoc
+
+    it "retrieves a collection starting from a document" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test25")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> pathFromString "collection/test"
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  maybeCollectionRef <- liftEffect $ sequence $ docCollection docRef <$> Collection.pathFromString "subcollection"
+                  maybeCollectionRef `shouldSatisfy` isJust

@@ -162,6 +162,12 @@ exports.updateImpl = function (docRef, data) {
   }
 }
 
+exports.docCollectionImpl = function (docRef, path) {
+  return function () {
+    return docRef.collection(path)
+  }
+}
+
 exports.collectionImpl = function (firestore, collectionPath) {
   return function () {
     return firestore.collection(collectionPath)
