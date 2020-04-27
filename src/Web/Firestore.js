@@ -161,3 +161,7 @@ exports.updateImpl = function (docRef, data) {
     return docRef.update(data)
   }
 }
+
+exports.batchImpl = function (firestore) {
+  return firestore.batch();
+}

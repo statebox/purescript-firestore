@@ -138,3 +138,12 @@ foreign import updateImpl :: forall a. Fn2 (DocumentReference a) DocumentData (E
 
 update :: forall a. DocumentReference a -> DocumentData -> Effect (Promise Unit)
 update = runFn2 updateImpl
+
+-- Write batch
+
+foreign import data WriteBatch :: Type
+
+foreign import batchImpl :: Fn1 Firestore WriteBatch
+
+batch :: Firestore -> WriteBatch
+batch = runFn1 batchImpl
