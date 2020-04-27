@@ -163,5 +163,12 @@ exports.updateImpl = function (docRef, data) {
 }
 
 exports.batchImpl = function (firestore) {
-  return firestore.batch();
+  return firestore.batch()
+}
+
+exports.batchSetImpl = function (writeBatch, docRef, data, options) {
+  // optional arguments should be passed as `undefined` and not as `null`
+  options = options === null ? undefined : options
+
+  return writeBatch.set(docRef, data, options)
 }

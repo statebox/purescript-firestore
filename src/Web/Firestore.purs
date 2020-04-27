@@ -17,6 +17,7 @@ module Web.Firestore
 , Firestore
 , WriteBatch
 , batch
+, batchSet
 , delete
 , deleteApp
 , doc
@@ -149,3 +150,8 @@ foreign import batchImpl :: Fn1 Firestore WriteBatch
 
 batch :: Firestore -> WriteBatch
 batch = runFn1 batchImpl
+
+foreign import batchSetImpl :: forall a. Fn4 WriteBatch (DocumentReference a) a (Nullable SetOptions) WriteBatch
+
+batchSet :: forall a. WriteBatch -> DocumentReference a -> a -> Maybe SetOptions -> WriteBatch
+batchSet writeBatch docRef docData options = runFn4 batchSetImpl writeBatch docRef docData (toNullable options)
