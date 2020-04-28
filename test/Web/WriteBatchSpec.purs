@@ -14,6 +14,7 @@ this program. If not, see <https://firstdonoharm.dev/>.
 module Test.Web.WriteBatchSpec where
 
 import Prelude
+import Control.Promise (toAff)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence)
@@ -24,7 +25,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
-import Web.Firestore (batch, batchDelete, batchSet, batchUpdate, doc, initializeApp, firestore)
+import Web.Firestore (batch, batchCommit, batchDelete, batchSet, batchUpdate, doc, initializeApp, firestore)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (primitiveDocument)
 import Web.Firestore.Path (pathFromString)
@@ -105,3 +106,24 @@ suite = do
                   let writeBatch = batch firestoreInstance
                       _ = batchUpdate writeBatch docRef document
                   pure unit
+
+    it "commits a write batch" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test-batch5")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  let writeBatch  = batch firestoreInstance
+                      writeBatch1 = batchSet writeBatch docRef document Nothing
+                      writeBatch2 = batchUpdate writeBatch docRef document
+                      writeBatch3 = batchDelete writeBatch docRef
+                  batchCommitPromise <- liftEffect $ batchCommit writeBatch3
+                  toAff batchCommitPromise
