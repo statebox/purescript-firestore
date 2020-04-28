@@ -181,8 +181,12 @@ exports.batchUpdateImpl = function (writeBatch, docRef, data) {
   return writeBatch.update(docRef, data)
 }
 
-exports.batchCommitImpl = function (writeBatch) {
+exports.batchCommitImpl = function (just, nothing, writeBatch) {
   return function () {
-    return writeBatch.commit()
+    try {
+      return just(writeBatch.commit())
+    } catch (error) {
+      return nothing
+    }
   }
 }

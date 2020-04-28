@@ -16,13 +16,14 @@ module Test.Web.WriteBatchSpec where
 import Prelude
 import Control.Promise (toAff)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromJust, isJust, isNothing)
 import Data.Traversable (sequence)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Foreign.Object (fromFoldable)
+import Partial.Unsafe (unsafePartial)
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (fail)
+import Test.Spec.Assertions (fail, shouldEqual)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
 import Web.Firestore (batch, batchCommit, batchDelete, batchSet, batchUpdate, doc, initializeApp, firestore)
@@ -126,4 +127,29 @@ suite = do
                       writeBatch2 = batchUpdate writeBatch docRef document
                       writeBatch3 = batchDelete writeBatch docRef
                   batchCommitPromise <- liftEffect $ batchCommit writeBatch3
-                  toAff batchCommitPromise
+                  isJust batchCommitPromise `shouldEqual` true
+                  toAff (unsafePartial $ fromJust batchCommitPromise)
+
+    it "does not commit a write batch twice" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test-batch6")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  let writeBatch  = batch firestoreInstance
+                      writeBatch1 = batchSet writeBatch docRef document Nothing
+                      writeBatch2 = batchUpdate writeBatch docRef document
+                      writeBatch3 = batchDelete writeBatch docRef
+                  batchCommitPromise1 <- liftEffect $ batchCommit writeBatch3
+                  isJust batchCommitPromise1 `shouldEqual` true
+                  toAff (unsafePartial $ fromJust batchCommitPromise1)
+                  batchCommitPromise2 <- liftEffect $ batchCommit writeBatch3
+                  isNothing batchCommitPromise2 `shouldEqual` true
