@@ -19,6 +19,7 @@ module Web.Firestore
 , batch
 , batchDelete
 , batchSet
+, batchUpdate
 , delete
 , deleteApp
 , doc
