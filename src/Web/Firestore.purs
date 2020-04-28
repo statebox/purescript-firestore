@@ -34,7 +34,6 @@ module Web.Firestore
 ) where
 
 import Prelude
-
 import Control.Promise (Promise)
 import Data.Argonaut (Json, encodeJson)
 import Data.Either (Either(..))
@@ -43,6 +42,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, toNullable)
 import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
+
 import Web.Firestore.DocumentData (DocumentData)
 import Web.Firestore.DocumentReference (DocumentReference)
 import Web.Firestore.Error.FirestoreError (FirestoreError)
