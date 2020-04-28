@@ -172,3 +172,7 @@ exports.batchSetImpl = function (writeBatch, docRef, data, options) {
 
   return writeBatch.set(docRef, data, options)
 }
+
+exports.batchDeleteImpl = function (writeBatch, docRef) {
+  return writeBatch.delete(docRef)
+}

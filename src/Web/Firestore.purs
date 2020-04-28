@@ -155,3 +155,8 @@ foreign import batchSetImpl :: forall a. Fn4 WriteBatch (DocumentReference a) a 
 
 batchSet :: forall a. WriteBatch -> DocumentReference a -> a -> Maybe SetOptions -> WriteBatch
 batchSet writeBatch docRef docData options = runFn4 batchSetImpl writeBatch docRef docData (toNullable options)
+
+foreign import batchDeleteImpl :: forall a. Fn2 WriteBatch (DocumentReference a) WriteBatch
+
+batchDelete :: forall a. WriteBatch -> DocumentReference a -> WriteBatch
+batchDelete = runFn2 batchDeleteImpl
