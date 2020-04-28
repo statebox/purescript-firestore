@@ -17,6 +17,7 @@ module Web.Firestore
 , Firestore
 , WriteBatch
 , batch
+, batchCommit
 , batchDelete
 , batchSet
 , batchUpdate
@@ -37,7 +38,7 @@ import Control.Promise (Promise)
 import Data.Argonaut (Json, encodeJson)
 import Data.Either (Either(..))
 import Data.Function.Uncurried (Fn1, Fn2, Fn3, Fn4, runFn1, runFn2, runFn3, runFn4)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, toNullable)
 import Data.Profunctor.Choice ((+++))
 import Effect (Effect)
@@ -167,3 +168,8 @@ foreign import batchUpdateImpl :: forall a. Fn3 WriteBatch (DocumentReference a)
 
 batchUpdate :: forall a. WriteBatch -> DocumentReference a -> DocumentData -> WriteBatch
 batchUpdate = runFn3 batchUpdateImpl
+
+foreign import batchCommitImpl :: forall a. Fn3 (a -> Maybe a) (Maybe a) WriteBatch (Effect (Maybe (Promise Unit)))
+
+batchCommit :: WriteBatch -> Effect (Maybe (Promise Unit))
+batchCommit = runFn3 batchCommitImpl Just Nothing
