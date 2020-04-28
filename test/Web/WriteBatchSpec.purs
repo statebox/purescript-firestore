@@ -24,7 +24,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail)
 
 import Test.Web.Firestore.OptionsUtils (buildTestOptions)
-import Web.Firestore (batch, batchDelete, batchSet, doc, initializeApp, firestore)
+import Web.Firestore (batch, batchDelete, batchSet, batchUpdate, doc, initializeApp, firestore)
 import Web.Firestore.DocumentData (DocumentData(..))
 import Web.Firestore.DocumentValue (primitiveDocument)
 import Web.Firestore.Path (pathFromString)
@@ -86,4 +86,22 @@ suite = do
                 Just docRef -> do
                   let writeBatch = batch firestoreInstance
                       _ = batchDelete writeBatch docRef
+                  pure unit
+
+    it "updates document on a write batch" do
+      testOptions <- buildTestOptions
+      eitherErrorApp <- liftEffect $ initializeApp testOptions (Just "firestore-test-batch4")
+      case eitherErrorApp of
+        Left error -> fail $ show error
+        Right app  -> do
+          eitherFirestoreInstance <- liftEffect $ firestore app
+          case eitherFirestoreInstance of
+            Left error -> fail $ show error
+            Right firestoreInstance -> do
+              maybeDocRef <- liftEffect $ sequence $ doc firestoreInstance <$> (pathFromString "collection/test")
+              case maybeDocRef of
+                Nothing     -> fail "invalid path"
+                Just docRef -> do
+                  let writeBatch = batch firestoreInstance
+                      _ = batchUpdate writeBatch docRef document
                   pure unit
