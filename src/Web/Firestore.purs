@@ -161,3 +161,8 @@ foreign import batchDeleteImpl :: forall a. Fn2 WriteBatch (DocumentReference a)
 
 batchDelete :: forall a. WriteBatch -> DocumentReference a -> WriteBatch
 batchDelete = runFn2 batchDeleteImpl
+
+foreign import batchUpdateImpl :: forall a. Fn3 WriteBatch (DocumentReference a) DocumentData WriteBatch
+
+batchUpdate :: forall a. WriteBatch -> DocumentReference a -> DocumentData -> WriteBatch
+batchUpdate = runFn3 batchUpdateImpl
