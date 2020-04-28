@@ -180,3 +180,9 @@ exports.batchDeleteImpl = function (writeBatch, docRef) {
 exports.batchUpdateImpl = function (writeBatch, docRef, data) {
   return writeBatch.update(docRef, data)
 }
+
+exports.batchCommitImpl = function (writeBatch) {
+  return function () {
+    return writeBatch.commit()
+  }
+}

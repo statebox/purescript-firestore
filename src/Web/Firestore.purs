@@ -167,3 +167,8 @@ foreign import batchUpdateImpl :: forall a. Fn3 WriteBatch (DocumentReference a)
 
 batchUpdate :: forall a. WriteBatch -> DocumentReference a -> DocumentData -> WriteBatch
 batchUpdate = runFn3 batchUpdateImpl
+
+foreign import batchCommitImpl :: Fn1 WriteBatch (Effect (Promise Unit))
+
+batchCommit :: WriteBatch -> Effect (Promise Unit)
+batchCommit = runFn1 batchCommitImpl
